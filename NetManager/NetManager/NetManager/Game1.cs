@@ -8,10 +8,17 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-using Bearded_Dangerzone_Client.GUI;
 
-namespace Bearded_Dangerzone_Client
+namespace NetManager 
 {
+    class Player:IFocusable
+    {
+        public Vector2 Position { get; set; }
+        public Player()
+        {
+            Position = Vector2.Zero;
+        }
+    }
     /// <summary>
     /// This is the main type for your game
     /// </summary>
@@ -19,14 +26,16 @@ namespace Bearded_Dangerzone_Client
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        MainMenu main;
+        Map map;
+        Camera2D camera;
+        Player player = new Player();
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferHeight = 700;
+            graphics.PreferredBackBufferWidth = 1300;
             Content.RootDirectory = "Content";
-            graphics.PreferredBackBufferHeight = 720;
-            graphics.PreferredBackBufferWidth = 1280;
-            IsMouseVisible = true;
+            camera = new Camera2D(this);
         }
 
         /// <summary>
@@ -38,9 +47,9 @@ namespace Bearded_Dangerzone_Client
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
+            Components.Add(camera);
             base.Initialize();
-        }
+        } 
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -50,8 +59,10 @@ namespace Bearded_Dangerzone_Client
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            Textures.Load(Content);
-            main = new MainMenu();
+            TextureManager.Load(Content);
+            camera.Focus = player;
+            
+            map = new Map();
             // TODO: use this.Content to load your game content here
         }
 
@@ -63,7 +74,7 @@ namespace Bearded_Dangerzone_Client
         {
             // TODO: Unload any non ContentManager content here
         }
-
+        float speed = 8f;
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -71,12 +82,35 @@ namespace Bearded_Dangerzone_Client
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            //camera.Update(gameTime);
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
-            main.Update(gameTime);
+            if (Keyboard.GetState().IsKeyDown(Keys.W))
+            {
+                player.Position -= new Vector2(0, speed);
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.S))
+            {
+                player.Position += new Vector2(0, speed);
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.A))
+            {
+                player.Position -= new Vector2(speed, 0);
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D))
+            {
+                player.Position += new Vector2(speed, 0);
+            }
             // TODO: Add your update logic here
-
+            if (Keyboard.GetState().IsKeyDown(Keys.F))
+            {
+                camera.Scale -= 0.05f;
+            }
+            else if (Keyboard.GetState().IsKeyDown(Keys.R))
+            {
+                camera.Scale += 0.05f;
+            }
             base.Update(gameTime);
         }
 
@@ -86,12 +120,14 @@ namespace Bearded_Dangerzone_Client
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Beige);
-            spriteBatch.Begin();
-            // TODO: Add your drawing code here
-            main.Draw(spriteBatch);
-            base.Draw(gameTime);
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
+            //spriteBatch.Begin();
+            map.Draw(spriteBatch);
             spriteBatch.End();
+            // TODO: Add your drawing code here
+
+            base.Draw(gameTime);
         }
     }
 }

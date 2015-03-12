@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FILE>
+  <SPRITES>
+    <SPRITE>
+      <NAME>air</NAME>
+      <ID>0</ID>
+      <FILENAME>Sheet</FILENAME>
+      <TYPE>tile</TYPE>
+      <MULTITILE>false</MULTITILE>
+      <TILESIZE>40:40</TILESIZE>
+      <STARTPOS></STARTPOS>
+    </SPRITE>
+    <SPRITE>
+      <NAME>dirt</NAME>
+      <ID>1</ID>
+      <FILENAME>Sheet</FILENAME>
+      <TYPE>tile</TYPE>
+      <MULTITILE>true</MULTITILE>
+      <TILESIZE>40:40</TILESIZE>
+      <SHEETPOS>0:0-160:80</SHEETPOS>
+    </SPRITE>
+    <SPRITE>
+      <NAME>grass</NAME>
+      <ID>101</ID>
+      <FILENAME>Sheet</FILENAME>
+      <TYPE>addon</TYPE>
+      <MULTITILE>true</MULTITILE>
+      <TILESIZE>40:10</TILESIZE>
+      <SHEETPOS>160:0-200:40</SHEETPOS>
+    </SPRITE>
+  </SPRITES>
+  <LOGIC>
+    <SPRITE id="1">
+      <MAXHEIGHT>-1</MAXHEIGHT>
+      <MINHEIGHT>-1</MINHEIGHT>
+      <MAXAMOUNT>-1</MAXAMOUNT>
+    </SPRITE>
+    <SPRITE>
+      
+    </SPRITE>
+  </LOGIC>
+</FILE>

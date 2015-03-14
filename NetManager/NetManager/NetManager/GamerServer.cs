@@ -125,7 +125,7 @@ namespace NetManager
                         case NetIncomingMessageType.DiscoveryRequest:
                             NetOutgoingMessage discoveryResponse = netServer.CreateMessage();
                             discoveryResponse.Write(serverName);
-                            netServer.SendDiscoveryResponse(discoveryResponse, netIn.SenderEndpoint);
+                            netServer.SendDiscoveryResponse(discoveryResponse, netIn.SenderEndPoint);
                             break;
                         case NetIncomingMessageType.StatusChanged:
                             if (netIn.SenderConnection.Status == NetConnectionStatus.Disconnected || netIn.SenderConnection.Status == NetConnectionStatus.Disconnecting)
@@ -149,7 +149,7 @@ namespace NetManager
         private void SendUpdates()
         {
             NetOutgoingMessage netOut;
-            foreach (var client in clients.Values)
+            foreach (var client in clients.Values.ToList())
             {
                 foreach (var client2 in clients.Values)
                 {
@@ -165,7 +165,18 @@ namespace NetManager
                         netServer.SendMessage(netOut, client2.Connection, NetDeliveryMethod.UnreliableSequenced);
                     }
                 }
+                foreach (var msg in messageQueue)
+                {
+                    netOut = netServer.CreateMessage();
+                    msg.Write(netOut);
+                    netServer.SendMessage(netOut, client.Connection, NetDeliveryMethod.ReliableUnordered);
+                }
             }
+            foreach (var disc in clients.Values.ToList())
+                if (disc.Disconnected)
+                    clients.Remove(disc.ID);
+
+            messageQueue.Clear();
         }
         private void ProcessCommands()
         {

@@ -11,12 +11,25 @@ using Microsoft.Xna.Framework.Media;
 
 namespace NetManager 
 {
-    class Player:IFocusable
+    class Player:IFocusable,ITrackable
     {
         public Vector2 Position { get; set; }
         public Player()
         {
             Position = Vector2.Zero;
+        }
+
+        private ushort id;
+        public ushort ID
+        {
+            get
+            {
+                return id;
+            }
+            set
+            {
+                id = value;
+            }
         }
     }
     /// <summary>
@@ -29,6 +42,7 @@ namespace NetManager
         Map map;
         Camera2D camera;
         Player player = new Player();
+        Texture2D tx;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -61,8 +75,9 @@ namespace NetManager
             spriteBatch = new SpriteBatch(GraphicsDevice);
             TextureManager.Load(Content);
             camera.Focus = player;
-            
-            map = new Map();
+            tx = Content.Load<Texture2D>("Sheet");
+            map = new Map("./Map/");
+            map.AddTrackable(player);
             // TODO: use this.Content to load your game content here
         }
 
@@ -73,6 +88,7 @@ namespace NetManager
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
+            map.SaveMap();
         }
         float speed = 8f;
         /// <summary>
@@ -124,6 +140,7 @@ namespace NetManager
             spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
             //spriteBatch.Begin();
             map.Draw(spriteBatch);
+            spriteBatch.Draw(tx, player.Position,TextureManager.GetSourceRectangle(5), Color.White);
             spriteBatch.End();
             // TODO: Add your drawing code here
 

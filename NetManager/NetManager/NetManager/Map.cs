@@ -14,8 +14,8 @@ namespace NetManager
 {
     interface ITrackable
     {
-        Vector2 Position;
-        ushort ID;
+        Vector2 Position { get; set; }
+        ushort ID { get; set; }
     }
     class Map
     {
@@ -23,29 +23,34 @@ namespace NetManager
         
         private short maxChunk;
         private short minChunk;
-        private Thread chunkCheckerThread;
         private ConcurrentDictionary<short, string> regions = new ConcurrentDictionary<short, string>();
         private ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
         private ConcurrentDictionary<ushort, ITrackable> chunkLoaders = new ConcurrentDictionary<ushort, ITrackable>();
         private string baseRegionPath;
+        private TimerCallback chunkCallback;
+        private Timer chunkManagerTimer;
+
         public Map(string mapPath)
         {
             //Load Config
             XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(mapPath + "/World.xml");
-            string[] sizeArr = xDoc.SelectSingleNode("CHUNKSIZE").InnerText.Split('x');
+            xDoc.Load(mapPath + "World.xml");
+            string[] sizeArr = xDoc.SelectSingleNode("WORLD/CHUNKSIZE").InnerText.Split('x');
             chunkSize = new Point(int.Parse(sizeArr[0]), int.Parse(sizeArr[1]));
-            maxChunk = short.Parse(xDoc.SelectSingleNode("MAXCHUNK").InnerText);
-            minChunk = short.Parse(xDoc.SelectSingleNode("MINCHUNK").InnerText);
+            maxChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MAXCHUNK").InnerText);
+            minChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MINCHUNK").InnerText);
+            Chunk.ChunkSize = chunkSize;
             //Identify Regions
-            baseRegionPath = mapPath + "/Regions/";
-            foreach (var region in Directory.GetFiles(mapPath + "/Regions/"))
+            baseRegionPath = mapPath + "Regions/";
+            foreach (var region in Directory.GetFiles(mapPath + "Regions/"))
             {
                 xDoc.Load(region);
                 regions.TryAdd(short.Parse(xDoc.DocumentElement.Attributes["id"].Value), region);
             }
+            chunkCallback = new TimerCallback(ManageChunks);
+            chunkManagerTimer = new Timer(chunkCallback, null, 0, 500);
             //Load Active Regions
-
+            LoadChunk(0);
         }
         /// <summary>
         /// Testing only
@@ -61,7 +66,13 @@ namespace NetManager
             LoadChunk(3);
             LoadChunk(4);
         }
-
+        public void SaveMap()
+        {
+            foreach (var chunk in activeChunks.Values)
+            {
+                SaveChunk(chunk);
+            }
+        }
         public void AddTrackable(ITrackable toTrack)
         {
             chunkLoaders.TryAdd(toTrack.ID,toTrack);
@@ -77,35 +88,37 @@ namespace NetManager
             chunkLoaders.TryRemove(id, out itr);
         }
 
-        private void LoadChunk(short chunkID)
+        private void LoadChunk(short chunkID,bool force = false)
         {
-            if (!regions.ContainsKey(chunkID))
+            if (!regions.ContainsKey(chunkID) || force)
             {
                 if (chunkID > 0)
                 {
                     LoadChunk((short)(chunkID - 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == chunkID - 1).GetY(false), false);
+                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID - 1)).GetY(false), false);
+                    Console.WriteLine(c.GetY(false));
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID,c);
-                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".txt");
+                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");
                 }
 
                 else if (chunkID < 0)
                 {
                     LoadChunk((short)(chunkID + 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == chunkID + 1).GetY(true), false);
+                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID + 1)).GetY(true), true);
+                    Console.WriteLine(c.GetY(true));
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID, c);
-                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".txt");
+                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");
                 }
                 else
                 {
                     Chunk c = Chunk.GenerateChunk(chunkSize.Y / 2, false, true);
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID, c);
-                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".txt");
+                    regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");
                 }
             }
             else
@@ -113,13 +126,85 @@ namespace NetManager
                 if (!activeChunks.ContainsKey(chunkID))
                 { 
                     //Needs to be loaded
+                    
+                    XmlDocument xDoc = new XmlDocument();
+                    xDoc.Load(regions[chunkID]);
+                    string data;
+                    Block[,] chunk;
+                    string[] rows = new string[1], columns;
+                    data = xDoc.SelectSingleNode("CHUNK/MAP").InnerText;
+                    if (!string.IsNullOrEmpty(data))
+                    {
+                        columns = data.Split('|');
+                    }
+                    else
+                    {
+                        LoadChunk(chunkID, true);
+                        return;
+                    }
+                    chunk = new Block[32, 32];
+
+                    for (int y = 0; y < columns.Length; y++)
+                    {
+                        rows = columns[y].Split(',');
+                        for (int x = 0; x <  rows.Length-1; x++)
+                        {
+                            chunk[x, y] = new Block(new Vector2(x, y), byte.Parse(rows[x]));
+                        }
+                    }
+                    Chunk c = new Chunk(chunk);
+                    c.ID = chunkID;
+                    activeChunks.TryAdd(chunkID, c);
                 }
+                //Chunk already loaded
             }
         }
-        private void SaveChunk(Chunk chunk)
+        private List<short> chunkManagerChunks = new List<short>();
+        private void ManageChunks(object stateInfo)
         {
-
+            chunkManagerChunks.Clear();
+            //Get all chunks that needs to be loaded
+            foreach (var loader in chunkLoaders)
+            {
+                chunkManagerChunks.AddRange(GetChunks(loader.Value));
+            }
+            //Check if some chunks are not loaded, or if some chunks that shouldn't be loaded are loaded
+            var toUnload = activeChunks.Keys.Except(chunkManagerChunks);
+            foreach (var ch in toUnload)
+            {
+                if(ch != 0)
+                    UnloadChunk(ch);
+            }
+            foreach (var toLoad in chunkManagerChunks)
+            {
+                LoadChunk(toLoad);
+            }
         }
+
+        private void UnloadChunk(short id)
+        {
+            Chunk c;
+            SaveChunk(activeChunks[id]);
+            activeChunks.TryRemove(id, out c);
+        }
+
+        private void SaveChunk(Chunk toSave)
+        {
+            XmlDocument xDoc = new XmlDocument();
+            XmlNode xBase = xDoc.CreateElement("CHUNK");
+            XmlNode xMap = xDoc.CreateElement("MAP");
+            XmlNode xEnt = xDoc.CreateElement("ENTITES");
+            
+            xMap.InnerText = toSave.GetChunk();
+            xBase.AppendChild(xMap);
+            XmlAttribute xAtt = xDoc.CreateAttribute("id");
+            xAtt.Value = toSave.ID.ToString();
+            xBase.Attributes.Append(xAtt);
+            xBase.AppendChild(xEnt);
+            xDoc.AppendChild(xBase);
+            xDoc.Save(baseRegionPath + toSave.ID + ".xml");
+        }
+
         public void Draw(SpriteBatch spriteBatch)
         {
             foreach (var chunk in activeChunks.Values)
@@ -127,6 +212,17 @@ namespace NetManager
                 chunk.Draw(spriteBatch);
             }
         }
+
+        private short[] GetChunks(ITrackable itr)
+        {
+            short[] shrtArr = new short[3];
+            shrtArr[2] = (short)Math.Floor(itr.Position.X / (chunkSize.X * 40));
+            shrtArr[0] = (short)(shrtArr[2] + 1);
+            shrtArr[1] = (short)(shrtArr[2] - 1);
+
+            return shrtArr;
+        }
+
         class Chunk
         {
             private Block[,] blocks;
@@ -167,11 +263,11 @@ namespace NetManager
             }
             public int GetY(bool left)
             {
-                if (left)
+                if (!left)
                 {
                     for (int i = 0; i < ChunkSize.Y; i++)
                     {
-                        if (blocks[0, i].ID != 0)
+                        if (blocks[ChunkSize.X - 1, i].ID != 0)
                             return i;
                     }
                     return 0;
@@ -180,7 +276,7 @@ namespace NetManager
                 {
                     for (int i = 0; i < ChunkSize.Y; i++)
                     {
-                        if (blocks[ChunkSize.X - 1, i].ID != 0)
+                        if (blocks[0, i].ID != 0)
                             return i;
                     }
                     return 0;
@@ -194,7 +290,22 @@ namespace NetManager
                     block.Draw(spriteBatch, chunkCorner);
                 }
             }
-
+            public string GetChunk()
+            {
+                StringBuilder sb = new StringBuilder();
+                for (int y = 0; y < ChunkSize.Y; y++)
+                {
+                    string row = "";
+                    for (int x = 0; x < ChunkSize.X; x++)
+                    {
+                        row += blocks[x, y].ID.ToString() + ",";
+                    }
+                    row.Remove(row.Length - 1, 1);
+                    row += "|";
+                    sb.Append(row);
+                }
+                return sb.ToString();
+            }
             public static Chunk GenerateChunk(int lastY, bool negative, bool first = false)
             {
                 Block[,] chunk = new Block[ChunkSize.X, ChunkSize.Y];
@@ -257,26 +368,28 @@ namespace NetManager
                     }
                     else
                     {
-                        for (int x = ChunkSize.X - 1; x >= 0; x--)
+                        for (int x = ChunkSize.X -1; x >= 0; x--)
                         {
                             //Elevation change logic
                             if (changeInRow == 0)
                             {
-                                up = !up;
-                                if (up)
+                                if (wasFlat)
+                                    up = !up;
+
+                                if (!up)
                                 {
-                                    while (prevY + (changeInRow = rnd.Next(0, maxChange)) <= 0) ;
+                                    while (prevY + (changeInRow = rnd.Next(1, maxChange)) <= 3) ;
                                     nextChange = 1;
                                 }
                                 else
                                 {
-                                    while (prevY - (changeInRow = rnd.Next(0, maxChange)) >= ChunkSize.Y) ;
+                                    while (prevY - (changeInRow = rnd.Next(1, maxChange)) >= ChunkSize.Y - 4) ;
                                     nextChange = -1;
                                 }
 
                                 if (!wasFlat)
                                 {
-                                    changeInRow = rnd.Next(2, 7);
+                                    changeInRow = rnd.Next(3, 12);
                                     nextChange = 0;
                                     wasFlat = true;
                                 }
@@ -285,7 +398,7 @@ namespace NetManager
 
                                 nextY = prevY + (nextChange * changeInRow);
                             }
-                            changeInRow--;
+
                             for (int y = 0; y < ChunkSize.Y; y++)
                             {
                                 if (y == prevY + nextChange)
@@ -296,7 +409,8 @@ namespace NetManager
                                     chunk[x, y] = new Block(new Vector2(x, y), (byte)((y > prevY + nextChange + 3) ? 3 : 1));
 
                             }
-                            prevY = nextY;
+                            changeInRow--;
+                            prevY += nextChange;
                         }
                         return new Chunk(chunk);
                     }
@@ -362,6 +476,7 @@ namespace NetManager
             textureData.Add(2, new Rectangle(40, 0, 40, 40));
             textureData.Add(3, new Rectangle(80, 0, 40, 40));
             textureData.Add(4, new Rectangle(120, 0, 40, 40));
+            textureData.Add(5, new Rectangle(120, 0, 20, 20));
         }
         public static Rectangle GetSourceRectangle(byte id)
         {

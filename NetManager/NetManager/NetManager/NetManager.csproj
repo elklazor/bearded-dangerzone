@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Camera.cs" />
+    <Compile Include="Chunk.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="GamerServer.cs" />

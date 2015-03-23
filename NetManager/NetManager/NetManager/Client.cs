@@ -7,7 +7,7 @@ using System.Text;
 
 namespace NetManager
 {
-    class Client
+    class Client:ITrackable
     {
 
         public Vector2 Position { get; set; }

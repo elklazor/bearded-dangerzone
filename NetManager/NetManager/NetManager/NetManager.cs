@@ -30,6 +30,7 @@ namespace NetManagerTest
         public bool Disconnected { get; set; }
         public byte Health { get; set; }
         public NetConnection Connection { get; private set; }
+         
         public Client(string clientName,ushort clientID,NetConnection connection)
         {
             Disconnected = false;
@@ -65,7 +66,7 @@ namespace NetManagerTest
         private string serverName;
         private Dictionary<ushort, Client> clients = new Dictionary<ushort, Client>();
         private List<Message> messageQueue = new List<Message>();
-     
+        private static object messageLock = new object();
         public GameServer(int port)
         {
             LoadConfig();
@@ -96,7 +97,7 @@ namespace NetManagerTest
 
         public void Input(string message)
         {
-            lock (commandQueue)
+            lock (messageLock)
             {
                 commandQueue.Add(message);
             }
@@ -206,10 +207,11 @@ namespace NetManagerTest
                     }
                 }
             }
+
         }
         private void ProcessCommands()
         {
-            lock (commandQueue)
+            lock (messageLock)
             {
                 foreach (var command in commandQueue)
                 {

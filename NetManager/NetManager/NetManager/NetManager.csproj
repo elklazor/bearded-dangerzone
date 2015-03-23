@@ -82,9 +82,11 @@
   <ItemGroup>
     <Compile Include="Camera.cs" />
     <Compile Include="Chunk.cs" />
+    <Compile Include="ChunkGeneration.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Extension.cs" />
-    <Compile Include="GamerServer.cs" />
+    <Compile Include="GameClient.cs" />
+    <Compile Include="GameServer.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="NetManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

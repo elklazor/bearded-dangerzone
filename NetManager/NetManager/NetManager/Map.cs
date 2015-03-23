@@ -9,13 +9,19 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Threading;
+using Lidgren.Network;
 
 namespace NetManager
 {
     interface ITrackable
     {
         Vector2 Position { get; set; }
-        ushort ID { get; set; }
+        byte AnimationState { get; set; }
+        string Name { get; private set; }
+        ushort ID { get; private set; }
+        bool Disconnected { get; set; }
+        byte Health { get; set; }
+        NetConnection Connection { get; private set; }
     }
     class Map
     {
@@ -31,9 +37,17 @@ namespace NetManager
         private Timer chunkManagerTimer;
         private List<short> chunkManagerChunks = new List<short>();
 
+        public ConcurrentDictionary<ushort, ITrackable> Trackables
+        {
+            get { return chunkLoaders; }
+        }
+
         public Map(string mapPath)
         {
             //Load Config
+            if (!Directory.Exists(mapPath) || !Directory.Exists(mapPath + "Regions/"))
+                Directory.CreateDirectory(mapPath + "Regions/");
+
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(mapPath + "World.xml");
             string[] sizeArr = xDoc.SelectSingleNode("WORLD/CHUNKSIZE").InnerText.Split('x');
@@ -53,26 +67,23 @@ namespace NetManager
             //Load Active Regions
             LoadChunk(0);
         }
-        /// <summary>
-        /// Testing only
-        /// </summary>
-        public Map()
-        {
-            chunkSize = new Point(32, 32);
-            Chunk.ChunkSize = chunkSize;
-            LoadChunk(0);
-            LoadChunk(-1);
-            LoadChunk(1);
-            LoadChunk(2);
-            LoadChunk(3);
-            LoadChunk(4);
-        }
+
         public void SaveMap()
         {
             foreach (var chunk in activeChunks.Values)
             {
                 SaveChunk(chunk);
             }
+        }
+        public void Send(NetConnection endPoint)
+        {
+            
+        }
+        public Chunk GetChunk(short id)
+        {
+            LoadChunk(id);
+            activeChunks[id].Reserved = true;
+            return activeChunks[id];
         }
         public void AddTrackable(ITrackable toTrack)
         {
@@ -170,8 +181,8 @@ namespace NetManager
                 chunkManagerChunks.AddRange(GetChunks(loader.Value));
             }
             //Check if some chunks are not loaded, or if some chunks that shouldn't be loaded are loaded
-            var toUnload = activeChunks.Keys.Except(chunkManagerChunks);
-            foreach (var ch in toUnload)
+            var toUnload = activeChunks.Keys.Where(x => activeChunks[x].Reserved == false).Except(chunkManagerChunks);
+            foreach (short ch in toUnload)
             {
                 if(ch != 0)
                     UnloadChunk(ch);
@@ -223,7 +234,7 @@ namespace NetManager
 
             return shrtArr;
         }
-
+        
         
     }
     static class TextureManager

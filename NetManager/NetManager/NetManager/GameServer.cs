@@ -16,7 +16,13 @@ namespace NetManager
         ClientConnectionResponse,
         ClientPosition,
         ChatMessage,
-        Kicked
+        Kicked,
+        ChunkRequest,
+        ChunkHash,
+        MapRequest,
+        BlockUpdate,
+        MapResponse,
+        ChunkResponse
     }
 
     class GameServer
@@ -27,13 +33,17 @@ namespace NetManager
         private Thread serverLoopThread;
         private double nextUpdate = 1d / 30d;
         private string serverName;
-        private Dictionary<ushort, Client> clients = new Dictionary<ushort, Client>();
+        //private Dictionary<ushort, Client> clients = new Dictionary<ushort, Client>();
         private List<Message> messageQueue = new List<Message>();
-     
+        private object commandLock = new object();
+        private string mapPath;
+        private Map worldMap;
+
         public GameServer(int port)
         {
             LoadConfig();
             netServer = new NetServer(serverConfig);
+            worldMap = new Map(mapPath);
         }
         
         private ushort NextClientID()
@@ -41,7 +51,7 @@ namespace NetManager
             for (ushort i = 1; i < netServer.Configuration.MaximumConnections; i++)
             {
                 bool match = false;
-                foreach (var k in clients.Keys)
+                foreach (var k in worldMap.Trackables.Keys)
                 {
                     if (k == i)
                         match = true;
@@ -60,7 +70,7 @@ namespace NetManager
 
         public void Input(string message)
         {
-            lock (commandQueue)
+            lock (commandLock)
             {
                 commandQueue.Add(message);
             }
@@ -69,12 +79,15 @@ namespace NetManager
         private void Loop()
         {
             NetIncomingMessage netIn;
+            NetOutgoingMessage netOut;
+            short id;
             while (true)
             {
                 ProcessCommands();
 
                 while ((netIn = netServer.ReadMessage()) != null)
                 {
+
                     switch (netIn.MessageType)
                     {
                         case NetIncomingMessageType.Data:
@@ -91,7 +104,7 @@ namespace NetManager
 
                                     if ((clientId = NextClientID()) != 0 && validName)
                                     {
-                                        clients.Add(clientId, new Client(clientName, clientId,netIn.SenderConnection));
+                                        worldMap.AddTrackable(new Client(clientName, clientId,netIn.SenderConnection));
                                         messageQueue.Add(new Message(clientName + " connected!", 0));
                                         connectionResponse.Write(clientId);
                                         connectionResponse.Write("Welcome");
@@ -113,10 +126,30 @@ namespace NetManager
                                 case MessageType.ClientPosition:
                                     try
                                     {
-                                        clients[netIn.ReadUInt16()].Position = netIn.ReadVector2();
+                                        worldMap.Trackables[netIn.ReadUInt16()].Position = netIn.ReadVector2();
                                     }
                                     catch (Exception)
                                     { }
+                                    break;
+                                case MessageType.MapRequest:
+                                    break;
+                                case MessageType.ChunkRequest:
+                                    id = netIn.ReadInt16();
+                                    netOut = netServer.CreateMessage();
+                                    netOut.Write((byte)MessageType.ChunkResponse);
+                                    netOut.Write(id);
+                                    netOut.Write(worldMap.GetChunk(id).GetChunk());
+                                    netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableUnordered);
+                                    worldMap.GetChunk(id).Reserved = false;
+                                    break;
+                                case MessageType.ChunkHash:
+                                    id = netIn.ReadInt16();
+                                    netOut = netServer.CreateMessage();
+                                    netOut.Write((byte)MessageType.ChunkHash);
+                                    netOut.Write(id);
+                                    netOut.Write(worldMap.GetChunk(id).GetHash());
+                                    netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableUnordered);
+                                    worldMap.GetChunk(id).Reserved = false;
                                     break;
                                 default:
                                     break;
@@ -130,7 +163,7 @@ namespace NetManager
                         case NetIncomingMessageType.StatusChanged:
                             if (netIn.SenderConnection.Status == NetConnectionStatus.Disconnected || netIn.SenderConnection.Status == NetConnectionStatus.Disconnecting)
                             {
-                                clients[netIn.ReadUInt16()].Disconnected = true;
+                                worldMap.Trackables[netIn.ReadUInt16()].Disconnected = true;
                             }
                             break;
                         default:
@@ -146,12 +179,23 @@ namespace NetManager
                 Thread.Sleep(1);
             }
         }
+
+        private void SendMap(NetConnection netConnection)
+        {
+            NetOutgoingMessage netOut = netServer.CreateMessage();
+            netOut.Write((byte)MessageType.MapResponse); 
+        }
+        private string GetChunkHash(short id)
+        {
+            return worldMap.GetChunk(id).GetHash();
+        }
         private void SendUpdates()
         {
             NetOutgoingMessage netOut;
-            foreach (var client in clients.Values.ToList())
+            var toEnumerate = worldMap.Trackables.Values.ToList();
+            foreach (var client in toEnumerate)
             {
-                foreach (var client2 in clients.Values)
+                foreach (var client2 in toEnumerate) 
                 {
                     if (client.ID != client2.ID) 
                     {
@@ -172,15 +216,15 @@ namespace NetManager
                     netServer.SendMessage(netOut, client.Connection, NetDeliveryMethod.ReliableUnordered);
                 }
             }
-            foreach (var disc in clients.Values.ToList())
+            foreach (var disc in toEnumerate)
                 if (disc.Disconnected)
-                    clients.Remove(disc.ID);
+                    worldMap.RemoveTrackable(disc.ID);
 
             messageQueue.Clear();
         }
         private void ProcessCommands()
         {
-            lock (commandQueue)
+            lock (commandLock)
             {
                 foreach (var command in commandQueue)
                 {
@@ -188,6 +232,7 @@ namespace NetManager
                     switch (command)
                     {
                         case "stop":
+                            worldMap.SaveMap();
                             netServer.Shutdown("Server shutting down");
                             serverLoopThread.Abort();
                             return;
@@ -209,12 +254,15 @@ namespace NetManager
                 xPort.InnerText ="25452";
                 XmlElement xClientCount = xDoc.CreateElement("MAXCLIENTS");
                 XmlElement xServerName = xDoc.CreateElement("SERVERNAME");
+                XmlElement xMapName = xDoc.CreateElement("MAPNAME");
+                xMapName.InnerText = "./Map/";
                 xServerName.InnerText = "Bearded server";
                 xClientCount.InnerText = "2";
                 xBase.AppendChild(xPort);
                 xBase.AppendChild(xClientCount);
                 xDoc.AppendChild(xBase);
                 xDoc.AppendChild(xServerName);
+                xDoc.AppendChild(xMapName);
                 xDoc.Save("./ServerConfig.xml");
             }
             xDoc.Load("./ServerConfig.xml");
@@ -225,6 +273,7 @@ namespace NetManager
             int clientCount = int.Parse(xDoc.SelectSingleNode("/MAXCLIENTS").InnerText);
             serverConfig.MaximumConnections = (clientCount > 255) ? 255 : clientCount;
             serverName = xDoc.SelectSingleNode("SERVERNAME").InnerText;
+            mapPath = xDoc.SelectSingleNode("MAPNAME").InnerText;
         }
         
     }

@@ -13,12 +13,11 @@ namespace Bearded_Dangerzone_Client.GUI
         public MainMenu():
             base()
         {
-            base.Load(new Rectangle((640 / 2) - 100, 50, 200, 260), new Rectangle(40, 40, 40, 40),"Sheet1",20,20);
+            base.Load(new Rectangle((640 / 2) - 100, 50, 200, 260), new Rectangle(40, 40, 40, 40),"Sheet1",20,20,Color.Black);
 
-
-            buttons[0].ButtonClicked += Button1_ButtonClicked;
+            AddButton("Play", 20, 20);
         }
-
+        
         void Button1_ButtonClicked()
         {
             

@@ -20,7 +20,7 @@ namespace Bearded_Dangerzone_Client.GUI
         public event MouseButtonClick ButtonClicked;
 
         private Color buttonColor = Color.White;
-        private Color buttonBaseColor;
+        private Color buttonBaseColor = Color.White;
         private bool buttonPressed;
         private Color textColor;
         private string text;
@@ -34,13 +34,13 @@ namespace Bearded_Dangerzone_Client.GUI
         /// <param name="sourceRectangle"></param>
         /// <param name="buttonText"></param>
         /// <param name="buttonTextColor"></param>
-        public Button(string buttonText,Color backgroundColor,Color buttonTextColor)
+        public Button(string buttonText,Color buttonTextColor,int y,int pad,int height,int menuwidth,Rectangle menRect)
         {
             textureSourceRectangle = new Rectangle(0,80,40,40);
             texture = Textures.GetTexture("Sheet1");
             text = buttonText;
             textColor = buttonTextColor;
-            
+            Setup(new Rectangle(pad + menRect.X, y + menRect.Y, menuwidth - 2*pad, height));
         }
         public void Setup(Rectangle buttonRect)
         {

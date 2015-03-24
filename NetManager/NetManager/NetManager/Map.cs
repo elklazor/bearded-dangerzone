@@ -17,8 +17,8 @@ namespace NetManager
     {
         Vector2 Position { get; set; }
         byte AnimationState { get; set; }
-        string Name { get; private set; }
-        ushort ID { get; private set; }
+        string Name { get; set; }
+        ushort ID { get; set; }
         bool Disconnected { get; set; }
         byte Health { get; set; }
         NetConnection Connection { get; private set; }
@@ -42,7 +42,7 @@ namespace NetManager
             get { return chunkLoaders; }
         }
 
-        public Map(string mapPath)
+        public Map(string mapPath,int mapManagerTimer)
         {
             //Load Config
             if (!Directory.Exists(mapPath) || !Directory.Exists(mapPath + "Regions/"))
@@ -63,7 +63,7 @@ namespace NetManager
                 regions.TryAdd(short.Parse(xDoc.DocumentElement.Attributes["id"].Value), region);
             }
             chunkCallback = new TimerCallback(ManageChunks);
-            chunkManagerTimer = new Timer(chunkCallback, null, 0, 500);
+            chunkManagerTimer = new Timer(chunkCallback, null, 0, mapManagerTimer);
             //Load Active Regions
             LoadChunk(0);
         }

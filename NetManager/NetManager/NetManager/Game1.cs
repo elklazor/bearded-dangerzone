@@ -11,10 +11,10 @@ using Microsoft.Xna.Framework.Media;
 
 namespace NetManager 
 {
-    class Player:IFocusable,ITrackable
+    class Playersa:IFocusable,ITrackable
     {
         public Vector2 Position { get; set; }
-        public Player()
+        public Playersa()
         {
             Position = Vector2.Zero;
         }
@@ -31,6 +31,60 @@ namespace NetManager
                 id = value;
             }
         }
+
+
+        public byte AnimationState
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool Disconnected
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public byte Health
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public Lidgren.Network.NetConnection Connection
+        {
+            get { throw new NotImplementedException(); }
+        }
     }
     /// <summary>
     /// This is the main type for your game
@@ -41,7 +95,7 @@ namespace NetManager
         SpriteBatch spriteBatch;
         Map map;
         Camera2D camera;
-        Player player = new Player();
+        Playersa player = new Playersa();
         Texture2D tx;
         public Game1()
         {
@@ -76,7 +130,7 @@ namespace NetManager
             TextureManager.Load(Content);
             camera.Focus = player;
             tx = Content.Load<Texture2D>("Sheet");
-            map = new Map("./Map/");
+            map = new Map("./Map/",500);
             map.AddTrackable(player);
             // TODO: use this.Content to load your game content here
         }

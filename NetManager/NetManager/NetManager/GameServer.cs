@@ -1,5 +1,6 @@
 ﻿using Lidgren.Network;
 using Lidgren.Network.Xna;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,7 +44,7 @@ namespace NetManager
         {
             LoadConfig();
             netServer = new NetServer(serverConfig);
-            worldMap = new Map(mapPath);
+            worldMap = new Map(mapPath,1000);
         }
         
         private ushort NextClientID()
@@ -108,6 +109,7 @@ namespace NetManager
                                         messageQueue.Add(new Message(clientName + " connected!", 0));
                                         connectionResponse.Write(clientId);
                                         connectionResponse.Write("Welcome");
+                                        connectionResponse.Write(new Vector2(400, 40));
                                     }
                                     else if (clientId == 0)
                                     {

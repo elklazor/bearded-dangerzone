@@ -23,7 +23,9 @@ namespace NetManager
         MapRequest,
         BlockUpdate,
         MapResponse,
-        ChunkResponse
+        ChunkResponse,
+        PlayersRequest,
+        PlayersResponse
     }
 
     class GameServer
@@ -152,6 +154,22 @@ namespace NetManager
                                     netOut.Write(worldMap.GetChunk(id).GetHash());
                                     netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableUnordered);
                                     worldMap.GetChunk(id).Reserved = false;
+                                    break;
+                                case MessageType.PlayersRequest:
+                                    netOut = netServer.CreateMessage();
+                                    netOut.Write((byte)MessageType.PlayersResponse);
+                                    var b = worldMap.GetTrackables();
+                                    netOut.Write(b.Count);
+                                    foreach (var c in b)
+                                    {
+                                        netOut.Write(c.ID);
+                                        netOut.Write(c.Name);
+                                        netOut.Write(c.Health);
+                                        netOut.Write(c.Position);
+                                        netOut.Write(c.AnimationState);
+                                        netOut.Write(c.Type);
+                                    }
+                                    netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableOrdered);
                                     break;
                                 default:
                                     break;

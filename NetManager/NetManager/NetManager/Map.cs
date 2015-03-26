@@ -10,19 +10,11 @@ using System.Text;
 using System.Xml;
 using System.Threading;
 using Lidgren.Network;
+using System.Xml.Linq;
 
 namespace NetManager
 {
-    interface ITrackable
-    {
-        Vector2 Position { get; set; }
-        byte AnimationState { get; set; }
-        string Name { get; set; }
-        ushort ID { get; set; }
-        bool Disconnected { get; set; }
-        byte Health { get; set; }
-        NetConnection Connection { get; private set; }
-    }
+
     class Map
     {
         private Point chunkSize;
@@ -31,23 +23,30 @@ namespace NetManager
         private short minChunk;
         private ConcurrentDictionary<short, string> regions = new ConcurrentDictionary<short, string>();
         private ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
-        private ConcurrentDictionary<ushort, ITrackable> chunkLoaders = new ConcurrentDictionary<ushort, ITrackable>();
+        private ConcurrentDictionary<ushort, Client> chunkLoaders = new ConcurrentDictionary<ushort, Client>();
         private string baseRegionPath;
         private TimerCallback chunkCallback;
         private Timer chunkManagerTimer;
         private List<short> chunkManagerChunks = new List<short>();
-
-        public ConcurrentDictionary<ushort, ITrackable> Trackables
+        private readonly bool isClient;
+        private string pathToMap;
+        public ConcurrentDictionary<ushort, Client> Trackables
         {
             get { return chunkLoaders; }
         }
-
+        /// <summary>
+        /// Use only for server
+        /// </summary>
+        /// <param name="mapPath"></param>
+        /// <param name="mapManagerTimer"></param>
+        /// <param name="client"></param>
         public Map(string mapPath,int mapManagerTimer)
         {
+            isClient = false;
             //Load Config
             if (!Directory.Exists(mapPath) || !Directory.Exists(mapPath + "Regions/"))
                 Directory.CreateDirectory(mapPath + "Regions/");
-
+            pathToMap = mapPath;
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(mapPath + "World.xml");
             string[] sizeArr = xDoc.SelectSingleNode("WORLD/CHUNKSIZE").InnerText.Split('x');
@@ -62,17 +61,53 @@ namespace NetManager
                 xDoc.Load(region);
                 regions.TryAdd(short.Parse(xDoc.DocumentElement.Attributes["id"].Value), region);
             }
+            Client track;
+            xDoc.Load(mapPath + "Players.xml");
+            foreach (XmlNode iTrack in xDoc.SelectNodes("TRACKABLE"))
+            {
+                track = new Client();
+                string[] sPos = iTrack.SelectSingleNode("POSITION").InnerText.Split('x');
+                ushort id = ushort.Parse(iTrack.SelectSingleNode("ID").InnerText);
+                track.SetAll(iTrack.SelectSingleNode("NAME").InnerText, id , new Vector2(float.Parse(sPos[0]), float.Parse(sPos[1])), byte.Parse(iTrack.SelectSingleNode("TYPE").InnerText));
+                chunkLoaders.TryAdd(id,track);
+            }
             chunkCallback = new TimerCallback(ManageChunks);
             chunkManagerTimer = new Timer(chunkCallback, null, 0, mapManagerTimer);
             //Load Active Regions
             LoadChunk(0);
         }
-
+        public Map(string worldConfig)
+        {
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.LoadXml(worldConfig);
+            string[] sizeArr = xDoc.SelectSingleNode("WORLD/CHUNKSIZE").InnerText.Split('x');
+            chunkSize = new Point(int.Parse(sizeArr[0]), int.Parse(sizeArr[1]));
+            maxChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MAXCHUNK").InnerText);
+            minChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MINCHUNK").InnerText);
+            Chunk.ChunkSize = chunkSize;
+        }
+        public List<Client> GetTrackables()
+        {
+            return chunkLoaders.Values.ToList();
+        }
         public void SaveMap()
         {
             foreach (var chunk in activeChunks.Values)
             {
                 SaveChunk(chunk);
+            }
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load(pathToMap + "Players.xml");
+            //GetList of ID's
+            Dictionary<ushort, XmlNode> nodes = new Dictionary<ushort, XmlNode>();
+            foreach (XmlNode id in xDoc.SelectNodes("TRACKABLE"))
+            {
+               
+            }
+            
+            foreach (var p in chunkLoaders)
+            {
+                
             }
         }
         public void Send(NetConnection endPoint)
@@ -85,18 +120,18 @@ namespace NetManager
             activeChunks[id].Reserved = true;
             return activeChunks[id];
         }
-        public void AddTrackable(ITrackable toTrack)
+        public void AddTrackable(Client toTrack)
         {
             chunkLoaders.TryAdd(toTrack.ID,toTrack);
         }
-        public void RemoveTrackable(ITrackable toRemove)
+        public void RemoveTrackable(Client toRemove)
         {
-            ITrackable itr;
+            Client itr;
             chunkLoaders.TryRemove(toRemove.ID, out itr);
         }
         public void RemoveTrackable(ushort id)
         {
-            ITrackable itr;
+            Client itr;
             chunkLoaders.TryRemove(id, out itr);
         }
 
@@ -225,7 +260,7 @@ namespace NetManager
             }
         }
 
-        private short[] GetChunks(ITrackable itr)
+        private short[] GetChunks(Client itr)
         {
             short[] shrtArr = new short[3];
             shrtArr[2] = (short)Math.Floor(itr.Position.X / (chunkSize.X * 40));

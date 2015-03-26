@@ -11,7 +11,7 @@ using Microsoft.Xna.Framework.Media;
 
 namespace NetManager 
 {
-    class Playersa:IFocusable,ITrackable
+    class Playersa:IFocusable
     {
         public Vector2 Position { get; set; }
         public Playersa()
@@ -131,7 +131,6 @@ namespace NetManager
             camera.Focus = player;
             tx = Content.Load<Texture2D>("Sheet");
             map = new Map("./Map/",500);
-            map.AddTrackable(player);
             // TODO: use this.Content to load your game content here
         }
 

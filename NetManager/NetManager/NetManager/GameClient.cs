@@ -16,7 +16,7 @@ namespace NetManager
         private NetClient netClient;
         private Thread loopThread;
         private ConcurrentQueue<Message> chatQueue = new ConcurrentQueue<Message>();
-        private ConcurrentDictionary<ushort, ITrackable> clients = new ConcurrentDictionary<ushort, ITrackable>();
+        private ConcurrentDictionary<ushort, Client> clients = new ConcurrentDictionary<ushort, Client>();
         private Player localPlayer;
         private string name;
         public GameClient(int port, string ip,string playerName)
@@ -55,6 +55,10 @@ namespace NetManager
                                 netOut.Write((byte)MessageType.ClientConnection);
                                 netOut.Write(name);
                                 netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
+                                netOut = netClient.CreateMessage();
+                                netOut.Write((byte)MessageType.PlayersRequest);
+                                netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
+                                netOut = netClient.CreateMessage();
                             }
                             break;
                         default:
@@ -67,12 +71,13 @@ namespace NetManager
 
         private void HandleData(NetIncomingMessage netIn)
         {
+            ushort id;
             switch ((MessageType)netIn.ReadByte())
             {
                 case MessageType.ClientConnection:
                     break;
                 case MessageType.ClientConnectionResponse:
-                    ushort id = netIn.ReadUInt16();
+                    id = netIn.ReadUInt16();
                     if (id != 0)
                     {
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
@@ -85,6 +90,15 @@ namespace NetManager
                     }
                     break;
                 case MessageType.ClientPosition:
+                    id = netIn.ReadUInt16();
+                    if (!clients.ContainsKey(id))
+                    { 
+                       
+                    }
+                    else
+                    { 
+                        
+                    }
                     break;
                 case MessageType.ChatMessage:
                     break;
@@ -102,6 +116,20 @@ namespace NetManager
                     break;
                 case MessageType.ChunkResponse:
                     break;
+                case MessageType.PlayersResponse:
+                    int length = netIn.ReadInt32();
+                    Client c;
+                    for (int i = 0; i < length; i++)
+                    {
+                        c = new Client();
+                        c.ID = netIn.ReadUInt16();
+                        c.Name = netIn.ReadString();
+                        c.Position = netIn.ReadVector2();
+                        c.AnimationState = netIn.ReadByte();
+                        c.Type = netIn.ReadByte();
+                        clients.TryAdd(c.ID, c);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -111,36 +139,9 @@ namespace NetManager
         
 
     }
-
-    class Player : ITrackable
+    class Player:Client
     {
-
-
-        public Vector2 Position { get; set; }
-
-
-        public byte AnimationState { get; set; }
-
-        public string Name { get; set; }
-
-        public ushort ID { get; set; }
-
-        public bool Disconnected { get; set; }
-
-        public byte Health { get; set; }
-
-        private NetConnection connection;
-
-        public NetConnection Connection
-        {
-            get { return connection; }
-        }
         public bool Initialized { get; set; }
-
-        public Player()
-        {
-
-        }
         public void SetAllFields(Vector2 position, string name,ushort id,byte health)
         {
             Position = position;
@@ -148,13 +149,6 @@ namespace NetManager
             ID = id;
             Health = health;
             Initialized = true;
-        }
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            if (Initialized)
-            { 
-                
-            }
         }
     }
 

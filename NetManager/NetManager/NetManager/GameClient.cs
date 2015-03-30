@@ -96,8 +96,8 @@ namespace NetManager
                        
                     }
                     else
-                    { 
-                        
+                    {
+                        chatQueue.Enqueue(new Message("Got invalid id from server", 0));    
                     }
                     break;
                 case MessageType.ChatMessage:

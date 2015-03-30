@@ -104,8 +104,16 @@ namespace NetManager
                                     bool validName = true;
                                     if (clientName == "" || clientName.Contains(' '))
                                         validName = false;
-
-                                    if ((clientId = NextClientID()) != 0 && validName)
+                                    Client locC;
+                                    if((locC = worldMap.CheckClient(clientName)) != null)
+                                    {
+                                        worldMap.AddTrackable(locC);
+                                        messageQueue.Add(new Message(clientName + "connected!", 0));
+                                        connectionResponse.Write(locC.ID);
+                                        connectionResponse.Write("Welcome");
+                                        connectionResponse.Write(locC.Position);
+                                    }
+                                    else if ((clientId = NextClientID()) != 0 && validName)
                                     {
                                         worldMap.AddTrackable(new Client(clientName, clientId,netIn.SenderConnection));
                                         messageQueue.Add(new Message(clientName + " connected!", 0));

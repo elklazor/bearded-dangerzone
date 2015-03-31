@@ -235,7 +235,7 @@ namespace NetManager
                         netOut.Write(client.Health);
                         netOut.Write(client.Disconnected);
                         netServer.SendMessage(netOut, client2.Connection, NetDeliveryMethod.UnreliableSequenced);
-                    }
+                    } 
                 }
                 foreach (var msg in messageQueue)
                 {

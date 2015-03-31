@@ -72,6 +72,7 @@ namespace NetManager
         private void HandleData(NetIncomingMessage netIn)
         {
             ushort id;
+            Client c;
             switch ((MessageType)netIn.ReadByte())
             {
                 case MessageType.ClientConnection:
@@ -83,6 +84,7 @@ namespace NetManager
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
                         localPlayer = new Player();
                         localPlayer.SetAllFields(netIn.ReadVector2(), name, id, 100);
+                        
                     }
                     else
                     {
@@ -91,9 +93,13 @@ namespace NetManager
                     break;
                 case MessageType.ClientPosition:
                     id = netIn.ReadUInt16();
-                    if (!clients.ContainsKey(id))
-                    { 
-                       
+                    if (clients.ContainsKey(id))
+                    {
+                        clients[id].Position = netIn.ReadVector2();
+                        clients[id].AnimationState = netIn.ReadByte();
+                        clients[id].Health = netIn.ReadByte();
+                        if (netIn.ReadBoolean())
+                            clients.TryRemove(id, out c);
                     }
                     else
                     {
@@ -118,7 +124,6 @@ namespace NetManager
                     break;
                 case MessageType.PlayersResponse:
                     int length = netIn.ReadInt32();
-                    Client c;
                     for (int i = 0; i < length; i++)
                     {
                         c = new Client();
@@ -133,7 +138,7 @@ namespace NetManager
                 default:
                     break;
             }
-        }
+        } 
         private void DrawClient(Client client, SpriteBatch spriteBatch)
         { }
         
@@ -151,5 +156,6 @@ namespace NetManager
             Initialized = true;
         }
     }
+    
 
 }

@@ -84,7 +84,7 @@ namespace NetManager
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
                         localPlayer = new Player();
                         localPlayer.SetAllFields(netIn.ReadVector2(), name, id, 100);
-                        
+                        worldMap.Trackables.TryAdd(localPlayer.ID, localPlayer);
                     }
                     else
                     {

@@ -23,12 +23,14 @@ namespace NetManager
         {
             name = playerName;
             NetPeerConfiguration config = new NetPeerConfiguration("Beard");
-            config.Port = port;
+            //config.Port = port; --Auto assign the port instead, to avoid conflicts
             config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             netClient = new NetClient(config);
             netClient.Start();
             netClient.DiscoverKnownPeer(ip, port);
             chatQueue.Enqueue(new Message("Sending discovery request", 0));
+            loopThread = new Thread(new ThreadStart(Loop));
+            loopThread.Start();
         }
 
         private void Loop()
@@ -121,6 +123,10 @@ namespace NetManager
                 case MessageType.MapResponse:
                     break;
                 case MessageType.ChunkResponse:
+                    //ID,string
+                    string data = netIn.ReadString();
+                    short chunkId = netIn.ReadInt16();
+                    worldMap.AddChunk(Chunk.GetChunkFromString(data, chunkId));
                     break;
                 case MessageType.PlayersResponse:
                     int length = netIn.ReadInt32();
@@ -133,6 +139,8 @@ namespace NetManager
                         c.AnimationState = netIn.ReadByte();
                         c.Type = netIn.ReadByte();
                         clients.TryAdd(c.ID, c);
+                        if (c.Name == name)
+                            worldMap.SetPlayer(c);
                     }
                     break;
                 default:

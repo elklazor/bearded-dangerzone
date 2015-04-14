@@ -106,6 +106,29 @@ namespace NetManager
                 return Convert.ToBase64String(md5Hasher.ComputeHash(blocks.Cast<Block>().Select(x => x.ID).ToArray()));
             }
         }
+        /// <summary>
+        /// Returns a Chunk from a map string
+        /// </summary>
+        public static Chunk GetChunkFromString(string cData,short id)
+        {
+            Block[,] chunk;
+            string[] columns, rows;
+            columns = cData.Split('|');
+            
+            chunk = new Block[32, 32];
+
+            for (int y = 0; y < columns.Length; y++)
+            {
+                rows = columns[y].Split(',');
+                for (int x = 0; x < rows.Length - 1; x++)
+                {
+                    chunk[x, y] = new Block(new Vector2(x, y), byte.Parse(rows[x]));
+                }
+            }
+            Chunk c = new Chunk(chunk);
+            c.ID = id;
+            return c;
+        }
         class Entity
         {
 

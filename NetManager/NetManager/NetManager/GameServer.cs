@@ -242,6 +242,7 @@ namespace NetManager
                     netOut = netServer.CreateMessage();
                     msg.Write(netOut);
                     netServer.SendMessage(netOut, client.Connection, NetDeliveryMethod.ReliableUnordered);
+                    Console.WriteLine(msg.ToString());
                 }
             }
             foreach (var disc in toEnumerate)
@@ -321,7 +322,14 @@ namespace NetManager
             netOutgoing.Write(senderID);
             netOutgoing.Write(_message);
         }
+        /// <summary>
+        /// Returns the message
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return _message;
+        }
     }
 }
-
-  
+//Move game1 logic (drawing and updating) to GameClient

@@ -31,9 +31,21 @@ namespace NetManager
         private List<short> chunkManagerChunks = new List<short>();
         private readonly bool isClient;
         private string pathToMap;
+        private List<short> requestedChunks = new List<short>();
+        private Client localPlayer;
         public ConcurrentDictionary<ushort, Client> Trackables
         {
             get { return chunkLoaders; }
+        }
+        public void AddChunk(Chunk c)
+        {
+            activeChunks.TryAdd(c.ID, c);
+            if (requestedChunks.Contains(c.ID))
+                requestedChunks.Remove(c.ID);
+        }
+        public List<short> GetRequestedChunks()
+        {
+            return requestedChunks.ToList();
         }
         /// <summary>
         /// Use only for server
@@ -88,6 +100,10 @@ namespace NetManager
             minChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MINCHUNK").InnerText);
             Chunk.ChunkSize = chunkSize;
         }
+        public void SetPlayer(Client c)
+        {
+            localPlayer = c;
+        }
         public List<Client> GetTrackables()
         {
             return chunkLoaders.Values.ToList();
@@ -98,20 +114,24 @@ namespace NetManager
             {
                 SaveChunk(chunk);
             }
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(pathToMap + "Players.xml");
-            //GetList of ID's
-            Dictionary<ushort, XmlNode> nodes = new Dictionary<ushort, XmlNode>();
-            foreach (XmlNode id in xDoc.SelectNodes("TRACKABLE"))
-            {
-               
-            }
-            
-            foreach (var p in chunkLoaders)
-            {
-                
-            }
+            //XmlDocument xDoc = new XmlDocument();
+            //xDoc.Load(pathToMap + "Players.xml");
+            ////GetList of ID's
+            //Dictionary<ushort, XmlNode> nodes = new Dictionary<ushort, XmlNode>();
+            //foreach (XmlNode id in xDoc.SelectNodes("TRACKABLE"))
+            //{
+
+            //}
+
+            //foreach (var p in chunkLoaders)
+            //{
+
+            //}
         }
+        /// <summary>
+        /// Unused
+        /// </summary>
+        /// <param name="endPoint"></param>
         public void Send(NetConnection endPoint)
         {
             
@@ -145,8 +165,18 @@ namespace NetManager
             }
             else return null;
         }
+        /// <summary>
+        /// Used on the server
+        /// </summary>
+        /// <param name="chunkID"></param>
+        /// <param name="force"></param>
         private void LoadChunk(short chunkID,bool force = false)
         {
+            if (isClient)
+            {
+                ClientLoadChunk(chunkID);
+                return;
+            }
             if (!regions.ContainsKey(chunkID) || force)
             {
                 if (chunkID > 0)
@@ -216,14 +246,34 @@ namespace NetManager
                 //Chunk already loaded
             }
         }
-
+        /// <summary>
+        /// Used on the client
+        /// </summary>
+        /// <param name="chunkID"></param>
+        private void ClientLoadChunk(short chunkID)
+        {
+            if (!requestedChunks.Contains(chunkID))
+            {
+                requestedChunks.Add(chunkID);
+            }
+        }
         private void ManageChunks(object stateInfo)
         {
             chunkManagerChunks.Clear();
             //Get all chunks that needs to be loaded
-            foreach (var loader in chunkLoaders)
+            if (!isClient)
             {
-                chunkManagerChunks.AddRange(GetChunks(loader.Value));
+                foreach (var loader in chunkLoaders)
+                {
+                    chunkManagerChunks.AddRange(GetChunks(loader.Value));
+                }
+            }
+            else
+            {
+                if (localPlayer != null)
+                {
+                    chunkManagerChunks.AddRange(GetChunks(localPlayer));
+                }
             }
             //Check if some chunks are not loaded, or if some chunks that shouldn't be loaded are loaded
             var toUnload = activeChunks.Keys.Where(x => activeChunks[x].Reserved == false).Except(chunkManagerChunks);
@@ -247,19 +297,22 @@ namespace NetManager
 
         private void SaveChunk(Chunk toSave)
         {
-            XmlDocument xDoc = new XmlDocument();
-            XmlNode xBase = xDoc.CreateElement("CHUNK");
-            XmlNode xMap = xDoc.CreateElement("MAP");
-            XmlNode xEnt = xDoc.CreateElement("ENTITES");
-            
-            xMap.InnerText = toSave.GetChunk();
-            xBase.AppendChild(xMap);
-            XmlAttribute xAtt = xDoc.CreateAttribute("id");
-            xAtt.Value = toSave.ID.ToString();
-            xBase.Attributes.Append(xAtt);
-            xBase.AppendChild(xEnt);
-            xDoc.AppendChild(xBase);
-            xDoc.Save(baseRegionPath + toSave.ID + ".xml");
+            if (!isClient)
+            {
+                XmlDocument xDoc = new XmlDocument();
+                XmlNode xBase = xDoc.CreateElement("CHUNK");
+                XmlNode xMap = xDoc.CreateElement("MAP");
+                XmlNode xEnt = xDoc.CreateElement("ENTITES");
+
+                xMap.InnerText = toSave.GetChunk();
+                xBase.AppendChild(xMap);
+                XmlAttribute xAtt = xDoc.CreateAttribute("id");
+                xAtt.Value = toSave.ID.ToString();
+                xBase.Attributes.Append(xAtt);
+                xBase.AppendChild(xEnt);
+                xDoc.AppendChild(xBase);
+                xDoc.Save(baseRegionPath + toSave.ID + ".xml"); 
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch)

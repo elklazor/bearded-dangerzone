@@ -79,6 +79,7 @@ namespace NetManager
         }
         public Map(string worldConfig)
         {
+            isClient = true;
             XmlDocument xDoc = new XmlDocument();
             xDoc.LoadXml(worldConfig);
             string[] sizeArr = xDoc.SelectSingleNode("WORLD/CHUNKSIZE").InnerText.Split('x');
@@ -135,7 +136,7 @@ namespace NetManager
             Client itr;
             chunkLoaders.TryRemove(id, out itr);
         }
-        public Client CheckClient(string name)
+        public Client CheckClient(string name) 
         {
             var e = allLoaders.Values.Where(x => x.Name == name);
             if (e.Count() != 0)

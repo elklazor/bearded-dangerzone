@@ -20,6 +20,7 @@ namespace NetManager
         private short id;
         private static object md5Lock = new object();
         private static MD5CryptoServiceProvider md5Hasher = new MD5CryptoServiceProvider();
+        public bool Requested { get; set; }
         public bool Reserved { get; set; }
         public short ID
         {

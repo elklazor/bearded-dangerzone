@@ -99,6 +99,8 @@ namespace NetManager
             maxChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MAXCHUNK").InnerText);
             minChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MINCHUNK").InnerText);
             Chunk.ChunkSize = chunkSize;
+            chunkCallback = new TimerCallback(ManageChunks);
+            chunkManagerTimer = new Timer(chunkCallback, null, 0, 2000);
         }
         public void SetPlayer(Client c)
         {

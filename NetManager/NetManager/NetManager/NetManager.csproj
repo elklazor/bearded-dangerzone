@@ -86,6 +86,7 @@
     <Compile Include="Client.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="GameClient.cs" />
+    <Compile Include="GameClientGame.cs" />
     <Compile Include="GameServer.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="NetManager.cs" />

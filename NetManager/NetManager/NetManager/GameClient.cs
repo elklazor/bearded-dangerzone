@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 namespace NetManager
 {
-    class GameClient
+    partial class GameClient
     {
         private Map worldMap;
         private NetClient netClient;

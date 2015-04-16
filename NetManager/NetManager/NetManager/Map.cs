@@ -32,7 +32,9 @@ namespace NetManager
         private readonly bool isClient;
         private string pathToMap;
         private List<short> requestedChunks = new List<short>();
-        private Client localPlayer;
+        private Player localPlayer;
+        public string MapConfig { get; set; }
+
         public ConcurrentDictionary<ushort, Client> Trackables
         {
             get { return chunkLoaders; }
@@ -67,6 +69,7 @@ namespace NetManager
             maxChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MAXCHUNK").InnerText);
             minChunk = short.Parse(xDoc.SelectSingleNode("WORLD/MINCHUNK").InnerText);
             Chunk.ChunkSize = chunkSize;
+            MapConfig = xDoc.OuterXml;
             //Identify Regions
             baseRegionPath = mapPath + "Regions/";
             foreach (var region in Directory.GetFiles(mapPath + "Regions/"))
@@ -102,9 +105,13 @@ namespace NetManager
             chunkCallback = new TimerCallback(ManageChunks);
             chunkManagerTimer = new Timer(chunkCallback, null, 0, 2000);
         }
-        public void SetPlayer(Client c)
+        public void SetPlayer(Player c)
         {
             localPlayer = c;
+        }
+        public Player LocalPlayer
+        {
+            get { return localPlayer; }
         }
         public List<Client> GetTrackables()
         {

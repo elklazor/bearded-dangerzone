@@ -11,81 +11,7 @@ using Microsoft.Xna.Framework.Media;
 
 namespace NetManager 
 {
-    class Playersa:IFocusable
-    {
-        public Vector2 Position { get; set; }
-        public Playersa()
-        {
-            Position = Vector2.Zero;
-        }
-
-        private ushort id;
-        public ushort ID
-        {
-            get
-            {
-                return id;
-            }
-            set
-            {
-                id = value;
-            }
-        }
-
-
-        public byte AnimationState
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public string Name
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public bool Disconnected
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public byte Health
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public Lidgren.Network.NetConnection Connection
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
+    
     /// <summary>
     /// This is the main type for your game
     /// </summary>
@@ -93,17 +19,18 @@ namespace NetManager
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Map map;
         Camera2D camera;
-        Playersa player = new Playersa();
-        Texture2D tx;
+        GameClient gameClient;
+        GameServer gameServer;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             graphics.PreferredBackBufferHeight = 700;
             graphics.PreferredBackBufferWidth = 1300;
             Content.RootDirectory = "Content";
+           
             camera = new Camera2D(this);
+
         }
 
         /// <summary>
@@ -128,9 +55,12 @@ namespace NetManager
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             TextureManager.Load(Content);
-            camera.Focus = player;
-            tx = Content.Load<Texture2D>("Sheet");
-            map = new Map("./Map/",500);
+
+            gameServer = new GameServer(29);
+            gameServer.Start();
+
+            gameClient = new GameClient(25452, "127.0.0.1", "TestPlayer");
+            camera.Focus = gameClient;
             // TODO: use this.Content to load your game content here
         }
 
@@ -141,7 +71,6 @@ namespace NetManager
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
-            map.SaveMap();
         }
         float speed = 8f;
         /// <summary>
@@ -155,22 +84,6 @@ namespace NetManager
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                player.Position -= new Vector2(0, speed);
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                player.Position += new Vector2(0, speed);
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.A))
-            {
-                player.Position -= new Vector2(speed, 0);
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.D))
-            {
-                player.Position += new Vector2(speed, 0);
-            }
             // TODO: Add your update logic here
             if (Keyboard.GetState().IsKeyDown(Keys.F))
             {
@@ -180,6 +93,8 @@ namespace NetManager
             {
                 camera.Scale += 0.05f;
             }
+            if(gameClient.Initialized)
+                gameClient.Update(gameTime);
             base.Update(gameTime);
         }
 
@@ -191,9 +106,8 @@ namespace NetManager
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
-            //spriteBatch.Begin();
-            map.Draw(spriteBatch);
-            spriteBatch.Draw(tx, player.Position,TextureManager.GetSourceRectangle(5), Color.White);
+            if(gameClient.Initialized)
+            gameClient.Draw(spriteBatch);
             spriteBatch.End();
             // TODO: Add your drawing code here
 

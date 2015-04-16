@@ -7,10 +7,10 @@ using System.Text;
 
 namespace NetManager
 {
-    class Client
+    class Client:IFocusable
     {
-
-        public Vector2 Position { get; set; }
+        private Vector2 position;
+        public Vector2 Position { get {return position;} set{ position = value;} }
         public byte AnimationState { get; set; }
         public string Name { get; set; }
         public ushort ID { get; set; }
@@ -37,5 +37,7 @@ namespace NetManager
             Position = pos;
             Type = type;
         }
+
+        
     }
 }

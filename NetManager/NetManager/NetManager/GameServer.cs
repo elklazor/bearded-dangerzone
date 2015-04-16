@@ -47,6 +47,7 @@ namespace NetManager
             LoadConfig();
             netServer = new NetServer(serverConfig);
             worldMap = new Map(mapPath,1000);
+
         }
         
         private ushort NextClientID()
@@ -144,6 +145,7 @@ namespace NetManager
                                     { }
                                     break;
                                 case MessageType.MapRequest:
+                                    SendMap(netIn.SenderConnection);
                                     break;
                                 case MessageType.ChunkRequest:
                                     id = netIn.ReadInt16();
@@ -211,7 +213,9 @@ namespace NetManager
         private void SendMap(NetConnection netConnection)
         {
             NetOutgoingMessage netOut = netServer.CreateMessage();
-            netOut.Write((byte)MessageType.MapResponse); 
+            netOut.Write((byte)MessageType.MapResponse);
+            netOut.Write(worldMap.MapConfig);
+            netServer.SendMessage(netOut, netConnection, NetDeliveryMethod.ReliableOrdered);
         }
         private string GetChunkHash(short id)
         {
@@ -289,20 +293,20 @@ namespace NetManager
                 xClientCount.InnerText = "2";
                 xBase.AppendChild(xPort);
                 xBase.AppendChild(xClientCount);
+                xBase.AppendChild(xServerName);
+                xBase.AppendChild(xMapName);
                 xDoc.AppendChild(xBase);
-                xDoc.AppendChild(xServerName);
-                xDoc.AppendChild(xMapName);
                 xDoc.Save("./ServerConfig.xml");
             }
             xDoc.Load("./ServerConfig.xml");
             serverConfig = new NetPeerConfiguration("Beard");
-            serverConfig.Port = int.Parse(xDoc.SelectSingleNode("/PORT").InnerText);
+            serverConfig.Port = int.Parse(xDoc.SelectSingleNode("CONFIG/PORT").InnerText);
             serverConfig.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             serverConfig.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
-            int clientCount = int.Parse(xDoc.SelectSingleNode("/MAXCLIENTS").InnerText);
+            int clientCount = int.Parse(xDoc.SelectSingleNode("CONFIG/MAXCLIENTS").InnerText);
             serverConfig.MaximumConnections = (clientCount > 255) ? 255 : clientCount;
-            serverName = xDoc.SelectSingleNode("SERVERNAME").InnerText;
-            mapPath = xDoc.SelectSingleNode("MAPNAME").InnerText;
+            serverName = xDoc.SelectSingleNode("CONFIG/SERVERNAME").InnerText;
+            mapPath = xDoc.SelectSingleNode("CONFIG/MAPNAME").InnerText;
         }
         
     }

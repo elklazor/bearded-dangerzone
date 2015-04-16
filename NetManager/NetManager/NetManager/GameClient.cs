@@ -19,6 +19,7 @@ namespace NetManager
         private ConcurrentDictionary<ushort, Client> clients = new ConcurrentDictionary<ushort, Client>();
         private Player localPlayer;
         private string name;
+        public bool Initialized { get; set; }
         public GameClient(int port, string ip,string playerName)
         {
             name = playerName;
@@ -31,6 +32,7 @@ namespace NetManager
             chatQueue.Enqueue(new Message("Sending discovery request", 0));
             loopThread = new Thread(new ThreadStart(Loop));
             loopThread.Start();
+            
         }
 
         private void Loop()
@@ -61,13 +63,25 @@ namespace NetManager
                                 netOut.Write((byte)MessageType.PlayersRequest);
                                 netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
                                 netOut = netClient.CreateMessage();
+                                netOut.Write((byte)MessageType.MapRequest);
+                                netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
                             }
                             break;
                         default:
                             break;
                     }
                 }
+                foreach (var s in chatQueue.ToList())
+                {
+                    Console.WriteLine(s.ToString());
+                }
+                chatQueue = new ConcurrentQueue<Message>(); ///Bad Solution
 
+                foreach (var cnk in worldMap.GetRequestedChunks())
+                {
+                    netOut = netClient.CreateMessage();
+                    netOut. //Request and stuff
+                }
             }
         }
 
@@ -86,7 +100,6 @@ namespace NetManager
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
                         localPlayer = new Player();
                         localPlayer.SetAllFields(netIn.ReadVector2(), name, id, 100);
-                        worldMap.Trackables.TryAdd(localPlayer.ID, localPlayer);
                     }
                     else
                     {
@@ -121,6 +134,9 @@ namespace NetManager
                 case MessageType.BlockUpdate:
                     break;
                 case MessageType.MapResponse:
+                    worldMap = new Map(netIn.ReadString());
+                    worldMap.SetPlayer(localPlayer);
+                    Initialized = true;
                     break;
                 case MessageType.ChunkResponse:
                     //ID,string
@@ -138,9 +154,8 @@ namespace NetManager
                         c.Position = netIn.ReadVector2();
                         c.AnimationState = netIn.ReadByte();
                         c.Type = netIn.ReadByte();
-                        clients.TryAdd(c.ID, c);
-                        if (c.Name == name)
-                            worldMap.SetPlayer(c);
+                        if(c.ID != localPlayer.ID)
+                            clients.TryAdd(c.ID, c);
                     }
                     break;
                 default:
@@ -162,6 +177,17 @@ namespace NetManager
             ID = id;
             Health = health;
             Initialized = true;
+        }
+
+
+        internal void Velocity(Vector2 velocity)
+        {
+            Position += velocity;
+        }
+
+        internal void Draw(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw(TextureManager.SpriteSheet, TextureManager.GetSourceRectangle(5), Color.White);
         }
     }
     

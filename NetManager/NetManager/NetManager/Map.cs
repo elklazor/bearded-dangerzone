@@ -18,7 +18,7 @@ namespace NetManager
     class Map
     {
         private Point chunkSize;
-        
+        public static object RegionLock = new object();
         private short maxChunk;
         private short minChunk;
         private ConcurrentDictionary<short, string> regions = new ConcurrentDictionary<short, string>();
@@ -31,7 +31,7 @@ namespace NetManager
         private List<short> chunkManagerChunks = new List<short>();
         private readonly bool isClient;
         private string pathToMap;
-        private List<short> requestedChunks = new List<short>();
+        private Dictionary<short,bool> requestedChunks = new Dictionary<short,bool>();
         private Player localPlayer;
         public string MapConfig { get; set; }
 
@@ -41,13 +41,16 @@ namespace NetManager
         }
         public void AddChunk(Chunk c)
         {
-            activeChunks.TryAdd(c.ID, c);
-            if (requestedChunks.Contains(c.ID))
-                requestedChunks.Remove(c.ID);
+            lock (RegionLock)
+            {
+                activeChunks.TryAdd(c.ID, c);
+                if (requestedChunks.Keys.Contains(c.ID))
+                    requestedChunks.Remove(c.ID); 
+            }
         }
-        public List<short> GetRequestedChunks()
+        public Dictionary<short,bool> GetRequestedChunks()
         {
-            return requestedChunks.ToList();
+            return requestedChunks;
         }
         /// <summary>
         /// Use only for server
@@ -174,6 +177,7 @@ namespace NetManager
             }
             else return null;
         }
+        
         /// <summary>
         /// Used on the server
         /// </summary>
@@ -261,9 +265,12 @@ namespace NetManager
         /// <param name="chunkID"></param>
         private void ClientLoadChunk(short chunkID)
         {
-            if (!requestedChunks.Contains(chunkID))
+            lock (RegionLock)
             {
-                requestedChunks.Add(chunkID);
+                if (!requestedChunks.Keys.Contains(chunkID))
+                {
+                    requestedChunks.Add(chunkID, false);
+                } 
             }
         }
         private void ManageChunks(object stateInfo)

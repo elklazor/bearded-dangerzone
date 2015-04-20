@@ -76,11 +76,19 @@ namespace NetManager
                     Console.WriteLine(s.ToString());
                 }
                 chatQueue = new ConcurrentQueue<Message>(); ///Bad Solution
-
-                foreach (var cnk in worldMap.GetRequestedChunks())
+                lock (Map.RegionLock)
                 {
-                    netOut = netClient.CreateMessage();
-                    netOut. //Request and stuff
+                    var enu = worldMap.GetRequestedChunks();
+                    foreach (var cnk in enu)
+                    {
+                        if (cnk.Value == true)
+                            continue;
+                        netOut = netClient.CreateMessage();
+                        netOut.Write((byte)MessageType.ChunkRequest);
+                        netOut.Write(cnk.Key);
+                        enu[cnk.Key] = true;
+                        netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
+                    } 
                 }
             }
         }

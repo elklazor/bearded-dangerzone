@@ -25,6 +25,7 @@ namespace NetManager
         private ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
         private ConcurrentDictionary<ushort, Client> chunkLoaders = new ConcurrentDictionary<ushort, Client>();
         private ConcurrentDictionary<ushort, Client> allLoaders = new ConcurrentDictionary<ushort, Client>();
+        private ConcurrentDictionary<short, Chunk> allChunks = new ConcurrentDictionary<short, Chunk>();
         private string baseRegionPath;
         private TimerCallback chunkCallback;
         private Timer chunkManagerTimer;
@@ -46,6 +47,10 @@ namespace NetManager
                 activeChunks.TryAdd(c.ID, c);
                 if (requestedChunks.Keys.Contains(c.ID))
                     requestedChunks.Remove(c.ID); 
+                if(allChunks.ContainsKey(c.ID))
+                    allChunks[c.ID] = c;
+                else
+                    allChunks.TryAdd(c.ID,c);
             }
         }
         public Dictionary<short,bool> GetRequestedChunks()
@@ -62,6 +67,7 @@ namespace NetManager
         {
             isClient = false;
             //Load Config
+            
             if (!Directory.Exists(mapPath) || !Directory.Exists(mapPath + "Regions/"))
                 Directory.CreateDirectory(mapPath + "Regions/");
             pathToMap = mapPath;
@@ -139,14 +145,6 @@ namespace NetManager
             //{
 
             //}
-        }
-        /// <summary>
-        /// Unused
-        /// </summary>
-        /// <param name="endPoint"></param>
-        public void Send(NetConnection endPoint)
-        {
-            
         }
         public Chunk GetChunk(short id)
         {
@@ -267,10 +265,18 @@ namespace NetManager
         {
             lock (RegionLock)
             {
-                if (!requestedChunks.Keys.Contains(chunkID))
+                if (!allChunks.ContainsKey(chunkID))
                 {
-                    requestedChunks.Add(chunkID, false);
-                } 
+                    if (!requestedChunks.Keys.Contains(chunkID))
+                    {
+                        requestedChunks.Add(chunkID, false);
+                    }
+                }
+                else
+                {
+                    AddChunk(allChunks[chunkID]);
+                }
+                
             }
         }
         private void ManageChunks(object stateInfo)
@@ -348,8 +354,13 @@ namespace NetManager
 
             return shrtArr;
         }
-        
-        
+
+        internal void Update(GameTime gameTime)
+        {
+            var ids = GetChunks(localPlayer);
+            
+            localPlayer.CheckCollision();
+        }
     }
     static class TextureManager
     {

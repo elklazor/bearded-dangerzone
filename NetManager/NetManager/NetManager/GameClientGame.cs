@@ -33,6 +33,7 @@ namespace NetManager
                 velocity.Y = -(float)gameTime.ElapsedGameTime.TotalMilliseconds/5;
             }
             worldMap.LocalPlayer.Velocity(velocity);
+            worldMap.Update(gameTime);
         }
         public void Draw(SpriteBatch spriteBatch)
         {

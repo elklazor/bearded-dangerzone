@@ -155,6 +155,7 @@ namespace NetManager
                                     netOut.Write(worldMap.GetChunk(id).GetChunk());
                                     netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableUnordered);
                                     worldMap.GetChunk(id).Reserved = false;
+                                    Console.WriteLine("Request: " + id.ToString());
                                     break;
                                 case MessageType.ChunkHash:
                                     id = netIn.ReadInt16();
@@ -336,4 +337,3 @@ namespace NetManager
         }
     }
 }
-//Move game1 logic (drawing and updating) to GameClient

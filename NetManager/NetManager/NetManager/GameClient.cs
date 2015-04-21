@@ -20,6 +20,7 @@ namespace NetManager
         private Player localPlayer;
         private string name;
         public bool Initialized { get; set; }
+
         public GameClient(int port, string ip,string playerName)
         {
             name = playerName;
@@ -196,6 +197,16 @@ namespace NetManager
         internal void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(TextureManager.SpriteSheet, TextureManager.GetSourceRectangle(5), Color.White);
+        }
+
+        internal void Update()
+        {
+            
+        }
+
+        internal void CheckCollision(List<Block> blocks)
+        {
+            
         }
     }
     

@@ -201,13 +201,15 @@ namespace NetManager
 
         internal void Update()
         {
-            
+            MapRef
         }
 
         internal void CheckCollision(List<Block> blocks)
         {
             
         }
+
+        public Map MapRef { get; set; }
     }
     
 

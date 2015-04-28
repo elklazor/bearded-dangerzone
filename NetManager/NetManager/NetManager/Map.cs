@@ -24,8 +24,9 @@ namespace NetManager
         private ConcurrentDictionary<short, string> regions = new ConcurrentDictionary<short, string>();
         private ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
         private ConcurrentDictionary<ushort, Client> chunkLoaders = new ConcurrentDictionary<ushort, Client>();
-        private ConcurrentDictionary<ushort, Client> allLoaders = new ConcurrentDictionary<ushort, Client>();
         private ConcurrentDictionary<short, Chunk> allChunks = new ConcurrentDictionary<short, Chunk>();
+        public static object CollisionBlocksLock = new object();
+        internal List<Block> CollisionBlocks = new List<Block>();
         private string baseRegionPath;
         private TimerCallback chunkCallback;
         private Timer chunkManagerTimer;
@@ -35,6 +36,7 @@ namespace NetManager
         private Dictionary<short,bool> requestedChunks = new Dictionary<short,bool>();
         private Player localPlayer;
         public string MapConfig { get; set; }
+        
 
         public ConcurrentDictionary<ushort, Client> Trackables
         {
@@ -94,7 +96,7 @@ namespace NetManager
                 string[] sPos = iTrack.SelectSingleNode("POSITION").InnerText.Split('x');
                 ushort id = ushort.Parse(iTrack.SelectSingleNode("ID").InnerText);
                 track.SetAll(iTrack.SelectSingleNode("NAME").InnerText, id , new Vector2(float.Parse(sPos[0]), float.Parse(sPos[1])), byte.Parse(iTrack.SelectSingleNode("TYPE").InnerText));
-                allLoaders.TryAdd(id,track);
+                chunkLoaders.TryAdd(id,track);
             }
             chunkCallback = new TimerCallback(ManageChunks);
             chunkManagerTimer = new Timer(chunkCallback, null, 0, mapManagerTimer);
@@ -117,6 +119,7 @@ namespace NetManager
         public void SetPlayer(Player c)
         {
             localPlayer = c;
+            localPlayer.MapRef = this;
         }
         public Player LocalPlayer
         {
@@ -168,7 +171,7 @@ namespace NetManager
         }
         public Client CheckClient(string name) 
         {
-            var e = allLoaders.Values.Where(x => x.Name == name);
+            var e = chunkLoaders.Values.Where(x => x.Name == name);
             if (e.Count() != 0)
             {
                 return e.ToList()[0];
@@ -308,6 +311,7 @@ namespace NetManager
             {
                 LoadChunk(toLoad);
             }
+            
         }
 
         private void UnloadChunk(short id)
@@ -345,7 +349,7 @@ namespace NetManager
             }
         }
 
-        private short[] GetChunks(Client itr)
+        public short[] GetChunks(Client itr)
         {
             short[] shrtArr = new short[3];
             shrtArr[2] = (short)Math.Floor(itr.Position.X / (chunkSize.X * 40));
@@ -357,9 +361,12 @@ namespace NetManager
 
         internal void Update(GameTime gameTime)
         {
-            var ids = GetChunks(localPlayer);
-            
-            localPlayer.CheckCollision();
+            if(localPlayer != null)
+                if (localPlayer.Initialized)
+                {
+                    localPlayer.Update();
+                }
+
         }
     }
     static class TextureManager

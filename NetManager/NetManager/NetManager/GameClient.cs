@@ -201,7 +201,13 @@ namespace NetManager
 
         internal void Update()
         {
-            MapRef
+            foreach (var c in MapRef.activeChunks.Values)
+            {
+                if (c.ID != 0)
+                { 
+                    c.
+                }
+            }
         }
 
         internal void CheckCollision(List<Block> blocks)

@@ -22,7 +22,7 @@ namespace NetManager
         private short maxChunk;
         private short minChunk;
         private ConcurrentDictionary<short, string> regions = new ConcurrentDictionary<short, string>();
-        private ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
+        internal ConcurrentDictionary<short,Chunk> activeChunks = new ConcurrentDictionary<short, Chunk>();
         private ConcurrentDictionary<ushort, Client> chunkLoaders = new ConcurrentDictionary<ushort, Client>();
         private ConcurrentDictionary<short, Chunk> allChunks = new ConcurrentDictionary<short, Chunk>();
         public static object CollisionBlocksLock = new object();

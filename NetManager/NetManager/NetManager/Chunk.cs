@@ -22,6 +22,7 @@ namespace NetManager
         private static MD5CryptoServiceProvider md5Hasher = new MD5CryptoServiceProvider();
         public bool Requested { get; set; }
         public bool Reserved { get; set; }
+        public List<Block> Blocks { get { return drawableBlocks; } }
         public short ID
         {
             get { return id; }

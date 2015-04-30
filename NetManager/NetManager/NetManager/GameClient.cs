@@ -179,6 +179,7 @@ namespace NetManager
     class Player:Client
     {
         public bool Initialized { get; set; }
+        private Rectangle playerRectangle;
         public void SetAllFields(Vector2 position, string name,ushort id,byte health)
         {
             Position = position;
@@ -201,18 +202,29 @@ namespace NetManager
 
         internal void Update()
         {
+            playerRectangle = new Rectangle((int)Position.X, (int)Position.Y, 40, 80);
             foreach (var c in MapRef.activeChunks.Values)
             {
+                
                 if (c.ID != 0)
-                { 
-                    c.
+                {
+                    var enu = c.Blocks.Where(block => Vector2.Distance(block.Position,Position) < 500);
+                    foreach (var b in enu)
+                    {
+                        CheckCollision(new Rectangle((int)b.Position.X, (int)b.Position.Y, 40, 40));
+                        
+                    }
                 }
             }
         }
 
-        internal void CheckCollision(List<Block> blocks)
+        private void CheckCollision(Rectangle bRect)
         {
-            
+            Rectangle rt, rl, rr, rb;
+            rt = new Rectangle(playerRectangle.X, playerRectangle.Y - 10, playerRectangle.Width, playerRectangle.Height);
+            rl = new Rectangle(playerRectangle.X - 10, playerRectangle.Y, playerRectangle.Width, playerRectangle.Height);
+            rr = new Rectangle(playerRectangle.X, playerRectangle.Y, playerRectangle.Width + 10, playerRectangle.Height);
+            rb = new Rectangle(playerRectangle.X, playerRectangle.Y, playerRectangle.Width, playerRectangle.Height);
         }
 
         public Map MapRef { get; set; }

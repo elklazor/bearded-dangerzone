@@ -220,16 +220,49 @@ namespace NetManager
 
         private void CheckCollision(Rectangle bRect)
         {
-            
-            if (playerRectangle.Bottom > bRect.Top && playerRectangle.Top < bRect.Bottom && playerRectangle.Right > bRect.Left && playerRectangle.Left < bRect.Right)
-            { 
-                //Touch top
-                if (playerRectangle.Bottom > bRect.Top)
-                { }
-                //Touch 
-                if (playerRectangle.Left < bRect.Right)
-                { }
+            Rectangle rt, rl, rr, rb;
+            rt = new Rectangle(playerRectangle.X, playerRectangle.Y - 10, playerRectangle.Width, 20);
+            rl = new Rectangle(playerRectangle.X - 10, playerRectangle.Y, 20, playerRectangle.Height);
+            rr = new Rectangle(playerRectangle.X + 20, playerRectangle.Y, 30, playerRectangle.Height);
+            rb = new Rectangle(playerRectangle.X, playerRectangle.Y + 60, playerRectangle.Width, 30);
+
+            if (rt.Intersects(bRect))
+            {
+                Position = new Vector2(Position.X, bRect.Top - playerRectangle.Height);
             }
+            if (rl.Intersects(bRect))
+            {
+                Position = new Vector2(bRect.Left - playerRectangle.Width, Position.Y);
+            }
+            if (rr.Intersects(bRect))
+            {
+                Position = new Vector2(bRect.Right, Position.Y);
+            }
+            if (rb.Intersects(bRect))
+            {
+                Position = new Vector2(Position.X, bRect.Bottom);
+            }
+            ////Touch top
+            //if (playerRectangle.Bottom > bRect.Top && playerRectangle.Top < bRect.Bottom && playerRectangle.Right > bRect.Left && playerRectangle.Left < bRect.Right)
+            //{
+            //    Position = new Vector2(Position.X, bRect.Top - playerRectangle.Height);
+            //}
+            ////Touch left
+            //if (playerRectangle.Left < bRect.Right && playerRectangle.Top < bRect.Bottom && playerRectangle.Bottom > bRect.Top)
+            //{
+            //    Position = new Vector2(bRect.Right, Position.X);
+            //}
+            ////Touch right
+            //if (playerRectangle.Right > bRect.Left && playerRectangle.Top < bRect.Bottom && playerRectangle.Bottom > bRect.Top)
+            //{
+
+            //}
+            ////Touch bottom
+            //if (playerRectangle.Top < bRect.Bottom && playerRectangle.Right > bRect.Left && playerRectangle.Left < bRect.Right)
+            //{
+
+            //}
+            
             
         }
 

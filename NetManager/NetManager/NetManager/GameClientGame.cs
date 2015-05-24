@@ -12,27 +12,9 @@ namespace NetManager
     {
         KeyboardState kState;
         Vector2 velocity;
+        
         public void Update(GameTime gameTime)
         { 
-            kState = Keyboard.GetState();
-            velocity = Vector2.Zero;
-            if(kState.IsKeyDown(Keys.D))
-            {
-                velocity.X = (float)gameTime.ElapsedGameTime.TotalMilliseconds/5;
-            }
-            else if(kState.IsKeyDown(Keys.A))
-            {
-                velocity.X = -(float)gameTime.ElapsedGameTime.TotalMilliseconds/5;
-            }
-            if(kState.IsKeyDown(Keys.S))
-            {
-                velocity.Y = (float)gameTime.ElapsedGameTime.TotalMilliseconds/5;
-            }
-            else if(kState.IsKeyDown(Keys.S))
-            {
-                velocity.Y = -(float)gameTime.ElapsedGameTime.TotalMilliseconds/5;
-            }
-            worldMap.LocalPlayer.Velocity(velocity);
             worldMap.Update(gameTime);
         }
         public void Draw(SpriteBatch spriteBatch)

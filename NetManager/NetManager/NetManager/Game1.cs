@@ -22,13 +22,21 @@ namespace NetManager
         Camera2D camera;
         GameClient gameClient;
         GameServer gameServer;
+        private static SpriteFont gameFont;
+        
+        public static SpriteFont GameFont
+        {
+            get { return Game1.gameFont; }
+            set { Game1.gameFont = value; }
+        }
+        
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             graphics.PreferredBackBufferHeight = 700;
             graphics.PreferredBackBufferWidth = 1300;
             Content.RootDirectory = "Content";
-           
+            //.IsFullScreen = true;
             camera = new Camera2D(this);
 
         }
@@ -58,9 +66,10 @@ namespace NetManager
 
             gameServer = new GameServer(29);
             gameServer.Start();
-
+            gameFont = Content.Load<SpriteFont>("gameFont");
             gameClient = new GameClient(25452, "127.0.0.1", "TestPlayer");
             camera.Focus = gameClient;
+            camera.Scale = 1.45f;
             // TODO: use this.Content to load your game content here
         }
 
@@ -104,10 +113,12 @@ namespace NetManager
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.FromNonPremultiplied(110,161,255,255));
             spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
             if(gameClient.Initialized)
             gameClient.Draw(spriteBatch);
+
+            //spriteBatch.DrawString(GameFont, "Zoom: " + camera.Scale, new Vector2(0, 400), Color.Blue);
             spriteBatch.End();
             // TODO: Add your drawing code here
 

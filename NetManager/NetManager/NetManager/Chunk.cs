@@ -23,6 +23,9 @@ namespace NetManager
         public bool Requested { get; set; }
         public bool Reserved { get; set; }
         public List<Block> Blocks { get { return drawableBlocks; } }
+        private List<Rectangle> collisionRectangles = new List<Rectangle>();
+        public List<Rectangle> CollisionRectangles { get { return collisionRectangles; } }
+
         public short ID
         {
             get { return id; }
@@ -38,8 +41,9 @@ namespace NetManager
          * Stone 3
          * Spawn 4
          */
-        public Chunk(Block[,] _blocks)
+        public Chunk(Block[,] _blocks,short id)
         {
+            ID = id;
             blocks = _blocks;
             foreach (var block in _blocks)
             {
@@ -49,6 +53,23 @@ namespace NetManager
                     drawableBlocks.Add(block);
                 }
 
+            }
+            for (int x = 0; x < 32; x++)
+            {
+                for (int y = 0; y < 32; y++)
+                {
+                    if (x == 0 || x == 32)
+                    {
+                        if(_blocks[x,y].ID != 0)
+                            collisionRectangles.Add(new Rectangle((int)chunkCorner.X + (int)_blocks[x, y].Position.X, (int)_blocks[x, y].Position.Y, 40, 40));
+                    }
+                    else if (_blocks[x, y].ID != 0)
+                    { 
+                        collisionRectangles.Add(new Rectangle((int)chunkCorner.X + (int)_blocks[x,y].Position.X,(int)_blocks[x,y].Position.Y,40,40));
+                        break;
+                    }
+                    
+                }
             }
         }
         public int GetY(bool left)
@@ -115,7 +136,6 @@ namespace NetManager
             Block[,] chunk;
             string[] columns, rows;
             columns = cData.Split('|');
-            
             chunk = new Block[32, 32];
 
             for (int y = 0; y < columns.Length; y++)
@@ -126,8 +146,8 @@ namespace NetManager
                     chunk[x, y] = new Block(new Vector2(x, y), byte.Parse(rows[x]));
                 }
             }
-            Chunk c = new Chunk(chunk);
-            c.ID = id;
+            Chunk c = new Chunk(chunk,id);
+            
             return c;
         }
         class Entity

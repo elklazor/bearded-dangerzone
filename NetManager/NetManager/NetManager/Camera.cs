@@ -116,7 +116,7 @@ namespace NetManager
 
             ScreenCenter = new Vector2(_viewportWidth / 2, _viewportHeight / 2);
             Scale = 1;
-            MoveSpeed = 1.25f;
+            MoveSpeed = 5f;
 
             base.Initialize();
         }

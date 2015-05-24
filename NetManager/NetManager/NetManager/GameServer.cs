@@ -152,7 +152,8 @@ namespace NetManager
                                     netOut = netServer.CreateMessage();
                                     netOut.Write((byte)MessageType.ChunkResponse);
                                     netOut.Write(id);
-                                    netOut.Write(worldMap.GetChunk(id).GetChunk());
+                                    string s = worldMap.GetChunk(id).GetChunk();
+                                    netOut.Write(s);
                                     netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableUnordered);
                                     worldMap.GetChunk(id).Reserved = false;
                                     Console.WriteLine("Request: " + id.ToString());

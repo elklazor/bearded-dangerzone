@@ -8,7 +8,7 @@ namespace NetManager
 {
     partial class Chunk
     {
-        public static Chunk GenerateChunk(int lastY, bool negative, bool first = false)
+        public static Chunk GenerateChunk(int lastY, bool negative,short id, bool first = false)
         {
             Block[,] chunk = new Block[ChunkSize.X, ChunkSize.Y];
             if (!first)
@@ -20,6 +20,7 @@ namespace NetManager
                 int nextChange = 0;
                 bool wasFlat = true;
                 int maxChange = 4;
+
                 if (!negative)
                 {
                     for (int x = 0; x < ChunkSize.X; x++)
@@ -66,7 +67,7 @@ namespace NetManager
                         changeInRow--;
                         prevY += nextChange;
                     }
-                    return new Chunk(chunk);
+                    return new Chunk(chunk,id);
                 }
                 else
                 {
@@ -114,7 +115,7 @@ namespace NetManager
                         changeInRow--;
                         prevY += nextChange;
                     }
-                    return new Chunk(chunk);
+                    return new Chunk(chunk,id);
                 }
             }
             else
@@ -138,7 +139,7 @@ namespace NetManager
                         }
                     }
                 }
-                return new Chunk(chunk);
+                return new Chunk(chunk,id);
             }
         }
     }

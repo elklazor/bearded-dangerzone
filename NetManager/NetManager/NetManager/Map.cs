@@ -11,6 +11,7 @@ using System.Xml;
 using System.Threading;
 using Lidgren.Network;
 using System.Xml.Linq;
+using NetManager.Environment;
 
 namespace NetManager
 {
@@ -36,7 +37,8 @@ namespace NetManager
         private Dictionary<short,bool> requestedChunks = new Dictionary<short,bool>();
         private Player localPlayer;
         public string MapConfig { get; set; }
-        
+        private List<Cloud> cloudsList = new List<Cloud>();
+        Random rnd = new Random();
 
         public ConcurrentDictionary<ushort, Client> Trackables
         {
@@ -195,9 +197,9 @@ namespace NetManager
             {
                 if (chunkID > 0)
                 {
-                    LoadChunk((short)(chunkID - 1));
+                    LoadChunk((short)(chunkID + 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID - 1)).GetY(false), false);
+                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID + 1)).GetY(true), false,chunkID,false);
                     Console.WriteLine(c.GetY(false));
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID,c);
@@ -206,9 +208,9 @@ namespace NetManager
 
                 else if (chunkID < 0)
                 {
-                    LoadChunk((short)(chunkID + 1));
+                    LoadChunk((short)(chunkID - 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID + 1)).GetY(true), true);
+                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID - 1)).GetY(false), true, chunkID,false);
                     Console.WriteLine(c.GetY(true));
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID, c);
@@ -216,7 +218,7 @@ namespace NetManager
                 }
                 else
                 {
-                    Chunk c = Chunk.GenerateChunk(chunkSize.Y / 2, false, true);
+                    Chunk c = Chunk.GenerateChunk(chunkSize.Y / 2, false,chunkID, true);
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID, c);
                     regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");
@@ -253,8 +255,7 @@ namespace NetManager
                             chunk[x, y] = new Block(new Vector2(x, y), byte.Parse(rows[x]));
                         }
                     }
-                    Chunk c = new Chunk(chunk);
-                    c.ID = chunkID;
+                    Chunk c = new Chunk(chunk,chunkID);
                     activeChunks.TryAdd(chunkID, c);
                 }
                 //Chunk already loaded
@@ -340,12 +341,18 @@ namespace NetManager
                 xDoc.Save(baseRegionPath + toSave.ID + ".xml"); 
             }
         }
-
         public void Draw(SpriteBatch spriteBatch)
         {
+            
+            
+
             foreach (var chunk in activeChunks.Values)
             {
                 chunk.Draw(spriteBatch);
+            }
+            foreach (var cloud in cloudsList)
+            {
+                cloud.Draw(spriteBatch);
             }
         }
 
@@ -358,15 +365,30 @@ namespace NetManager
 
             return shrtArr;
         }
-
+        private float lastCloudSpawned = 0;
         internal void Update(GameTime gameTime)
         {
+            lastCloudSpawned += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             if(localPlayer != null)
                 if (localPlayer.Initialized)
                 {
-                    localPlayer.Update();
+                    localPlayer.Update(gameTime);
                 }
 
+            if (lastCloudSpawned >= 3000)
+            {
+                lastCloudSpawned = 0;
+                if (cloudsList.Count < 10)
+                {
+                    cloudsList.Add(new Cloud(new Vector2(localPlayer.Position.X + 400, rnd.Next(200, 300)), rnd.Next(0, 4),(float)(rnd.NextDouble()+1),rnd.Next(1,3)));
+                }
+            }
+            foreach (var cloud in cloudsList.ToList())
+            {
+                cloud.Update(gameTime);
+                if (Vector2.Distance(cloud.Position, localPlayer.Position) > 1000)
+                    cloudsList.Remove(cloud);
+            }
         }
     }
     static class TextureManager
@@ -380,11 +402,19 @@ namespace NetManager
             textureData.Add(2, new Rectangle(40, 0, 40, 40));
             textureData.Add(3, new Rectangle(80, 0, 40, 40));
             textureData.Add(4, new Rectangle(120, 0, 40, 40));
-            textureData.Add(5, new Rectangle(120, 0, 20, 20));
+            textureData.Add(5, new Rectangle(0, 80, 40, 80));
+            textureData.Add(6, new Rectangle(0, 40, 40, 40));
+            
+            Sky = content.Load<Texture2D>("AllClouds");
         }
         public static Rectangle GetSourceRectangle(byte id)
         {
             return textureData[id];
         }
+
+        public static Texture2D Sky { get; set; }
     }
 }
+//160 55
+//160 + 55 50 30
+//

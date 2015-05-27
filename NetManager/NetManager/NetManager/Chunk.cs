@@ -58,7 +58,7 @@ namespace NetManager
             {
                 for (int y = 0; y < 32; y++)
                 {
-                    if (x == 0 || x == 32)
+                    if (x == 0 || x == 31)
                     {
                         if(_blocks[x,y].ID != 0)
                             collisionRectangles.Add(new Rectangle((int)chunkCorner.X + (int)_blocks[x, y].Position.X, (int)_blocks[x, y].Position.Y, 40, 40));
@@ -74,21 +74,30 @@ namespace NetManager
         }
         public int GetY(bool left)
         {
+            
             if (!left)
             {
-                for (int i = 0; i < ChunkSize.Y; i++)
+                for (int i = 0; i < 32; i++)
                 {
                     if (blocks[ChunkSize.X - 1, i].ID != 0)
+                    {
+                        Console.WriteLine("Chunk: " + id + " . " + i);
                         return i;
+                    }
+                    
                 }
                 return 0;
             }
             else
             {
-                for (int i = 0; i < ChunkSize.Y; i++)
+                for (int i = 0; i < 32; i++)
                 {
                     if (blocks[0, i].ID != 0)
+                    {
+                        Console.WriteLine("Chunk: " + id + " . " + i);
                         return i;
+                    }
+                        
                 }
                 return 0;
             }

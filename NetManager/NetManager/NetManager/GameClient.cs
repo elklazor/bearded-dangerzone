@@ -92,6 +92,7 @@ namespace NetManager
                             netOut.Write(cnk.Key);
                             toChange.Add(cnk.Key);
                             netClient.SendMessage(netOut, NetDeliveryMethod.ReliableOrdered);
+                            
                         }
                         foreach (var item in toChange)
                         {

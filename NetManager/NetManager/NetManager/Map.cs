@@ -46,8 +46,8 @@ namespace NetManager
         }
         public void AddChunk(Chunk c)
         {
-            lock (RegionLock)
-            {
+            //lock (RegionLock)
+            //{
                 activeChunks.TryAdd(c.ID, c);
                 if (requestedChunks.Keys.Contains(c.ID))
                     requestedChunks.Remove(c.ID); 
@@ -55,7 +55,7 @@ namespace NetManager
                     allChunks[c.ID] = c;
                 else
                     allChunks.TryAdd(c.ID,c);
-            }
+            //}
         }
         public Dictionary<short,bool> GetRequestedChunks()
         {
@@ -74,6 +74,7 @@ namespace NetManager
             
             if (!Directory.Exists(mapPath) || !Directory.Exists(mapPath + "Regions/"))
                 Directory.CreateDirectory(mapPath + "Regions/");
+
             pathToMap = mapPath;
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(mapPath + "World.xml");
@@ -188,19 +189,21 @@ namespace NetManager
         /// <param name="force"></param>
         private void LoadChunk(short chunkID,bool force = false)
         {
+            
             if (isClient)
             {
                 ClientLoadChunk(chunkID);
                 return;
             }
+
             if (!regions.ContainsKey(chunkID) || force)
             {
                 if (chunkID > 0)
                 {
-                    LoadChunk((short)(chunkID + 1));
+                    LoadChunk((short)(chunkID - 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID + 1)).GetY(true), false,chunkID,false);
-                    Console.WriteLine(c.GetY(false));
+
+                    Chunk c = Chunk.GenerateChunk(activeChunks[(short)(chunkID-1)].GetY(false), false,chunkID,false);
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID,c);
                     regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");
@@ -208,10 +211,9 @@ namespace NetManager
 
                 else if (chunkID < 0)
                 {
-                    LoadChunk((short)(chunkID - 1));
+                    LoadChunk((short)(chunkID + 1));
                     //LastY
-                    Chunk c = Chunk.GenerateChunk(activeChunks.Values.First(x => x.ID == (chunkID - 1)).GetY(false), true, chunkID,false);
-                    Console.WriteLine(c.GetY(true));
+                    Chunk c = Chunk.GenerateChunk(activeChunks[(short)(chunkID+1)].GetY(true), true, chunkID,false);
                     c.ID = chunkID;
                     activeChunks.TryAdd(c.ID, c);
                     regions.TryAdd(chunkID, baseRegionPath + chunkID.ToString() + ".xml");

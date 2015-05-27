@@ -46,7 +46,7 @@ namespace NetManager
         {
             LoadConfig();
             netServer = new NetServer(serverConfig);
-            worldMap = new Map(mapPath,1000);
+            worldMap = new Map(mapPath,100000);
 
         }
         

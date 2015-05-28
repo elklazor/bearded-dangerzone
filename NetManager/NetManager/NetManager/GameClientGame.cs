@@ -21,6 +21,10 @@ namespace NetManager
         {
             worldMap.Draw(spriteBatch);
             worldMap.LocalPlayer.Draw(spriteBatch);
+            foreach (var p in clients.Values)
+            {
+                p.Draw(spriteBatch);
+            }
         }
 
         public Vector2 Position

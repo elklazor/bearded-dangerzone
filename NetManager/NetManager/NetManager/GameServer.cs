@@ -25,7 +25,8 @@ namespace NetManager
         MapResponse,
         ChunkResponse,
         PlayersRequest,
-        PlayersResponse
+        PlayersResponse,
+        PlayerUpdate
     }
 
     class GameServer
@@ -239,6 +240,7 @@ namespace NetManager
                         netOut.Write(client.Position);
                         netOut.Write(client.AnimationState);
                         netOut.Write(client.Health);
+                        netOut.Write(client.Name);
                         netOut.Write(client.Disconnected);
                         netServer.SendMessage(netOut, client2.Connection, NetDeliveryMethod.UnreliableSequenced);
                     } 

@@ -16,7 +16,7 @@ namespace NetManager
         private NetClient netClient;
         private Thread loopThread;
         private ConcurrentQueue<Message> chatQueue = new ConcurrentQueue<Message>();
-        private ConcurrentDictionary<ushort, Client> clients = new ConcurrentDictionary<ushort, Client>();
+        private ConcurrentDictionary<ushort, Player> clients = new ConcurrentDictionary<ushort, Player>();
         private Player localPlayer;
         private string name;
         public bool Initialized { get; set; }
@@ -99,15 +99,19 @@ namespace NetManager
 		                    enu.Remove(item);
 	                    }
                         
-                    } 
+                    }
+                    netOut = netClient.CreateMessage();
+                    if(worldMap.SendPlayer(netOut))
+                        netClient.SendMessage(netOut, NetDeliveryMethod.Unreliable);
                 }
+                
             }
         }
 
         private void HandleData(NetIncomingMessage netIn)
         {
             ushort id;
-            Client c;
+            Player c;
             switch ((MessageType)netIn.ReadByte())
             {
                 case MessageType.ClientConnection:
@@ -118,6 +122,7 @@ namespace NetManager
                     {
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
                         localPlayer = new Player();
+                        localPlayer.Type = 1;
                         localPlayer.SetAllFields(netIn.ReadVector2(), name, id, 100);
                     }
                     else
@@ -127,17 +132,23 @@ namespace NetManager
                     break;
                 case MessageType.ClientPosition:
                     id = netIn.ReadUInt16();
-                    if (clients.ContainsKey(id))
+                    if (clients.ContainsKey(id) && id != worldMap.LocalPlayer.ID)
                     {
                         clients[id].Position = netIn.ReadVector2();
                         clients[id].AnimationState = netIn.ReadByte();
                         clients[id].Health = netIn.ReadByte();
+                        netIn.ReadString();
                         if (netIn.ReadBoolean())
                             clients.TryRemove(id, out c);
                     }
                     else
                     {
-                        chatQueue.Enqueue(new Message("Got invalid id from server", 0));    
+                        c = new Player();
+                        c.Position = netIn.ReadVector2();
+                        c.AnimationState = netIn.ReadByte();
+                        c.Health = netIn.ReadByte();
+                        c.Name = netIn.ReadString();
+                        clients.TryAdd(id, c);
                     }
                     break;
                 case MessageType.ChatMessage:
@@ -167,7 +178,7 @@ namespace NetManager
                     int length = netIn.ReadInt32();
                     for (int i = 0; i < length; i++)
                     {
-                        c = new Client();
+                        c = new Player();
                         c.ID = netIn.ReadUInt16();
                         c.Name = netIn.ReadString();
                         c.Position = netIn.ReadVector2();
@@ -181,8 +192,6 @@ namespace NetManager
                     break;
             }
         } 
-        private void DrawClient(Client client, SpriteBatch spriteBatch)
-        { }
         
 
     }

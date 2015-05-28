@@ -347,7 +347,6 @@ namespace NetManager
         {
             
             
-
             foreach (var chunk in activeChunks.Values)
             {
                 chunk.Draw(spriteBatch);
@@ -391,6 +390,16 @@ namespace NetManager
                 if (Vector2.Distance(cloud.Position, localPlayer.Position) > 1000)
                     cloudsList.Remove(cloud);
             }
+        }
+
+        internal bool SendPlayer(NetOutgoingMessage netOut)
+        {
+            if (localPlayer.NeedUpdate)
+            {
+                localPlayer.DumpPlayerData(netOut);
+                return true;
+            }
+            else return false;
         }
     }
     static class TextureManager

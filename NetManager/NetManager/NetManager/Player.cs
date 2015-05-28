@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Lidgren.Network;
+using Lidgren.Network.Xna;
 
 namespace NetManager
 {
@@ -23,11 +25,13 @@ namespace NetManager
         private float maxAnimationTimer = 200;
         float updateStartTimer = 3;
         private bool doneJumpCollision = false;
-        private short currentAnimationFrame = 0;
+        
         private Rectangle textureSourceRectangle;
+        private Vector2 previousPosition;
         public Player()
         {
             textureSourceRectangle = TextureManager.GetSourceRectangle(5);
+            AnimationState = 0;
         }
         public void SetAllFields(Vector2 position, string name, ushort id, byte health)
         {
@@ -44,7 +48,7 @@ namespace NetManager
             Position += velocity;
         }
 
-        internal void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(TextureManager.SpriteSheet, playerRectangle, textureSourceRectangle, Color.White,0f,Vector2.Zero,(flip)? SpriteEffects.FlipHorizontally : SpriteEffects.None,0f);
             
@@ -63,11 +67,14 @@ namespace NetManager
                     }
                 } 
             }
-            spriteBatch.DrawString(Game1.GameFont, "Jumped: " + jumped.ToString(), new Vector2(Position.X,Position.Y - 50), Color.Black);
-            spriteBatch.DrawString(Game1.GameFont, "JumpedUp: " + jumpedUp.ToString(), new Vector2(Position.X, Position.Y - 70), Color.Black);
-            spriteBatch.DrawString(Game1.GameFont, "Bot: " + bot.ToString(), new Vector2(Position.X, Position.Y - 90), Color.Red);
-            spriteBatch.DrawString(Game1.GameFont, "Left: " + left.ToString(), new Vector2(Position.X, Position.Y - 110), Color.Red);
-            spriteBatch.DrawString(Game1.GameFont, "Right: " + right.ToString(), new Vector2(Position.X, Position.Y - 130), Color.Red);
+            if (false)
+            {
+                spriteBatch.DrawString(Game1.GameFont, "Jumped: " + jumped.ToString(), new Vector2(Position.X, Position.Y - 50), Color.Black);
+                spriteBatch.DrawString(Game1.GameFont, "JumpedUp: " + jumpedUp.ToString(), new Vector2(Position.X, Position.Y - 70), Color.Black);
+                spriteBatch.DrawString(Game1.GameFont, "Bot: " + bot.ToString(), new Vector2(Position.X, Position.Y - 90), Color.Red);
+                spriteBatch.DrawString(Game1.GameFont, "Left: " + left.ToString(), new Vector2(Position.X, Position.Y - 110), Color.Red);
+                spriteBatch.DrawString(Game1.GameFont, "Right: " + right.ToString(), new Vector2(Position.X, Position.Y - 130), Color.Red); 
+            }
         }
         
         internal void Update(GameTime gameTime)
@@ -93,18 +100,35 @@ namespace NetManager
                     if (animTimer >= maxAnimationTimer)
                     {
                         animTimer = 0;
-                        currentAnimationFrame++;
-                        if (currentAnimationFrame > 3)
-                            currentAnimationFrame = 0;
+                        AnimationState++;
+                        if (AnimationState > 3)
+                            AnimationState = 0;
 
-                        textureSourceRectangle = new Rectangle(40 * currentAnimationFrame, 80, 40, 80);
+                        textureSourceRectangle = new Rectangle(40 * AnimationState, 80, 40, 80);
                     }
                 }
                 else
                     textureSourceRectangle =  new Rectangle(0,80,40,80);
-
+                previousPosition = Position;
                 Position += velocity;
+                if (Position != previousPosition)
+                    NeedUpdate = true;
+                else
+                    NeedUpdate = false;
+
             }
+        }
+        public void DumpPlayerData(NetOutgoingMessage netOut)
+        {
+         
+            netOut.Write((byte)MessageType.PlayerUpdate);
+            netOut.Write(ID);
+            netOut.Write(Name);
+            netOut.Write(Health);
+            netOut.Write(Position);
+            netOut.Write(AnimationState);
+            netOut.Write(Type);
+            
         }
         private void DrawRectangle(SpriteBatch sb, Rectangle r)
         {
@@ -178,7 +202,7 @@ namespace NetManager
             {
                 velocity.X = 0;
                 moving = false;
-                currentAnimationFrame = 0;
+                AnimationState = 0;
             }
             if (kState.IsKeyDown(Keys.S))
             {
@@ -211,5 +235,7 @@ namespace NetManager
         }
 
         public Map MapRef { get; set; }
+
+        public bool NeedUpdate { get; set; }
     }
 }

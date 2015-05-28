@@ -25,7 +25,7 @@ namespace NetManager
         private float maxAnimationTimer = 200;
         float updateStartTimer = 3;
         private bool doneJumpCollision = false;
-        
+        public bool IsLocal { get; set; }
         private Rectangle textureSourceRectangle;
         private Vector2 previousPosition;
         public Player()
@@ -41,7 +41,6 @@ namespace NetManager
             Health = health;
             Initialized = true;
         }
-        private bool flip = false;
         private bool moving = false;
         internal void Velocity(Vector2 velocity)
         {
@@ -50,7 +49,13 @@ namespace NetManager
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(TextureManager.SpriteSheet, playerRectangle, textureSourceRectangle, Color.White,0f,Vector2.Zero,(flip)? SpriteEffects.FlipHorizontally : SpriteEffects.None,0f);
+            if (!IsLocal)
+            {
+                playerRectangle = new Rectangle((int)Position.X, (int)Position.Y, 40, 80);
+                textureSourceRectangle = textureSourceRectangle = new Rectangle(40 * AnimationState, 80, 40, 80);
+            }
+
+            spriteBatch.Draw(TextureManager.SpriteSheet, playerRectangle, textureSourceRectangle, Color.White,0f,Vector2.Zero,(Flip)? SpriteEffects.FlipHorizontally : SpriteEffects.None,0f);
             
             if (drawCollisionRectangles)
             {
@@ -128,6 +133,7 @@ namespace NetManager
             netOut.Write(Position);
             netOut.Write(AnimationState);
             netOut.Write(Type);
+            netOut.Write(Flip);
             
         }
         private void DrawRectangle(SpriteBatch sb, Rectangle r)
@@ -189,13 +195,13 @@ namespace NetManager
             if (kState.IsKeyDown(Keys.D))
             {
                 velocity.X = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 7;
-                flip = false;
+                Flip = false;
                 moving = true;
             }
             else if (kState.IsKeyDown(Keys.A))
             {
                 velocity.X = -(float)gameTime.ElapsedGameTime.TotalMilliseconds / 7;
-                flip = true;
+                Flip = true;
                 moving = true;
             }
             else

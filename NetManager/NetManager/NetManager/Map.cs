@@ -44,6 +44,7 @@ namespace NetManager
         {
             get { return chunkLoaders; }
         }
+        
         public void AddChunk(Chunk c)
         {
             //lock (RegionLock)

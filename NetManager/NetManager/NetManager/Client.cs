@@ -38,6 +38,8 @@ namespace NetManager
             Type = type;
         }
 
-        
+
+
+        public bool Flip { get; set; }
     }
 }

@@ -22,6 +22,7 @@ namespace NetManager
         Camera2D camera;
         GameClient gameClient;
         GameServer gameServer;
+        private bool serverEnabled;
         private static SpriteFont gameFont;
         
         public static SpriteFont GameFont
@@ -30,7 +31,7 @@ namespace NetManager
             set { Game1.gameFont = value; }
         }
         
-        public Game1()
+        public Game1(bool server)
         {
             graphics = new GraphicsDeviceManager(this);
             graphics.PreferredBackBufferHeight = 700;
@@ -38,7 +39,18 @@ namespace NetManager
             Content.RootDirectory = "Content";
             //.IsFullScreen = true;
             camera = new Camera2D(this);
+            serverEnabled = server;
+            Exiting += Game1_Exiting;
 
+        }
+
+        void Game1_Exiting(object sender, EventArgs e)
+        {
+            if (serverEnabled)
+            {
+                gameServer.Stop();
+            }
+            gameClient.Stop();
         }
 
         /// <summary>
@@ -64,15 +76,18 @@ namespace NetManager
             spriteBatch = new SpriteBatch(GraphicsDevice);
             TextureManager.Load(Content);
 
-            gameServer = new GameServer(29);
-            gameServer.Start();
+            if (serverEnabled)
+            {
+                gameServer = new GameServer(29);
+                gameServer.Start();
+            }
             gameFont = Content.Load<SpriteFont>("gameFont");
-            gameClient = new GameClient(25452, "127.0.0.1", "TestPlayer");
+            gameClient = new GameClient(25452, "127.0.0.1", (serverEnabled)?"ServerPlayer":"ClientPlayer");
             camera.Focus = gameClient;
             camera.Scale = 1.45f;
             // TODO: use this.Content to load your game content here
         }
-
+        
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
         /// all content.
@@ -80,6 +95,7 @@ namespace NetManager
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
+
         }
         float speed = 8f;
         /// <summary>

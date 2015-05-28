@@ -35,7 +35,11 @@ namespace NetManager
             loopThread.Start();
             
         }
-
+        public void Stop()
+        {
+            loopThread.Abort();
+            netClient.Shutdown("Client shutting down");
+        }
         private void Loop()
         {
             NetIncomingMessage netIn;
@@ -138,6 +142,7 @@ namespace NetManager
                         clients[id].AnimationState = netIn.ReadByte();
                         clients[id].Health = netIn.ReadByte();
                         netIn.ReadString();
+                        clients[id].Flip = netIn.ReadBoolean();
                         if (netIn.ReadBoolean())
                             clients.TryRemove(id, out c);
                     }
@@ -148,6 +153,7 @@ namespace NetManager
                         c.AnimationState = netIn.ReadByte();
                         c.Health = netIn.ReadByte();
                         c.Name = netIn.ReadString();
+                        c.IsLocal = false;
                         clients.TryAdd(id, c);
                     }
                     break;
@@ -184,6 +190,7 @@ namespace NetManager
                         c.Position = netIn.ReadVector2();
                         c.AnimationState = netIn.ReadByte();
                         c.Type = netIn.ReadByte();
+                        c.IsLocal = false;
                         if(c.ID != localPlayer.ID)
                             clients.TryAdd(c.ID, c);
                     }

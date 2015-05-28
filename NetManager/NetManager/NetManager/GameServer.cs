@@ -47,10 +47,14 @@ namespace NetManager
         {
             LoadConfig();
             netServer = new NetServer(serverConfig);
-            worldMap = new Map(mapPath,100000);
+            worldMap = new Map(mapPath,2000);
 
         }
-        
+        public void Stop()
+        {
+            netServer.Shutdown("Server shutting down");
+            serverLoopThread.Abort();
+        }
         private ushort NextClientID()
         {
             for (ushort i = 1; i < netServer.Configuration.MaximumConnections; i++)
@@ -184,6 +188,20 @@ namespace NetManager
                                     }
                                     netServer.SendMessage(netOut, netIn.SenderConnection, NetDeliveryMethod.ReliableOrdered);
                                     break;
+                                case MessageType.PlayerUpdate:
+                                    clientId = netIn.ReadUInt16();
+                                    clientName = netIn.ReadString();
+                                    byte clientHealth = netIn.ReadByte();
+                                    Vector2 clientPosition = netIn.ReadVector2();
+                                    byte animationState = netIn.ReadByte();
+                                    byte type = netIn.ReadByte();
+                                    worldMap.Trackables[clientId].Name = clientName;
+                                    worldMap.Trackables[clientId].Health = clientHealth;
+                                    worldMap.Trackables[clientId].Position = clientPosition;
+                                    worldMap.Trackables[clientId].AnimationState = animationState;
+                                    worldMap.Trackables[clientId].Type = type;
+                                    worldMap.Trackables[clientId].Flip = netIn.ReadBoolean();
+                                    break;
                                 default:
                                     break;
                             }
@@ -241,6 +259,7 @@ namespace NetManager
                         netOut.Write(client.AnimationState);
                         netOut.Write(client.Health);
                         netOut.Write(client.Name);
+                        netOut.Write(client.Flip);
                         netOut.Write(client.Disconnected);
                         netServer.SendMessage(netOut, client2.Connection, NetDeliveryMethod.UnreliableSequenced);
                     } 

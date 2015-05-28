@@ -1,5 +1,5 @@
 using System;
-
+using System.Linq;
 namespace NetManager
 {
 #if WINDOWS || XBOX
@@ -10,7 +10,11 @@ namespace NetManager
         /// </summary>
         static void Main(string[] args)
         {
-            using (Game1 game = new Game1())
+            bool server = false;
+            if (args.Length > 0)
+                if (args.Contains("server"))
+                    server = true;
+            using (Game1 game = new Game1(server))
             {
                 game.Run();
             }

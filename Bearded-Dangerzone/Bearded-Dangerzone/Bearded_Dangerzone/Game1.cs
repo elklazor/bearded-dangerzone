@@ -8,49 +8,66 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-
-namespace NetManager 
+using Bearded_Dangerzone.GamePart;
+using Bearded_Dangerzone.GUI;
+namespace Bearded_Dangerzone
 {
-    
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    public class Game1 : Microsoft.Xna.Framework.Game
+    public class Game1 : Microsoft.Xna.Framework.Game, GamePart.IFocusable
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        GUI.MainMenu mainMenu;
+        GUI.Menu currentMenu;
         Camera2D camera;
-        GameClient gameClient;
         GameServer gameServer;
-        private bool serverEnabled;
-        private static SpriteFont gameFont;
-        
-        public static SpriteFont GameFont
+        GameClient gameClient;
+
+        public enum GameState
         {
-            get { return Game1.gameFont; }
-            set { Game1.gameFont = value; }
+            MainMenu,
+            Host,
+            Join
         }
-        
-        public Game1(bool server)
+        GameState gameState = GameState.MainMenu;
+        public Menu CurrentMenu
+        {
+            get { return currentMenu; }
+            set { currentMenu = value; }
+        }
+        public GameState BaseGameState
+        {
+            get { return gameState; }
+            set { gameState = value; }
+        }
+
+        public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             graphics.PreferredBackBufferHeight = 700;
             graphics.PreferredBackBufferWidth = 1300;
+            IsMouseVisible = true;
             Content.RootDirectory = "Content";
-            //graphics.IsFullScreen = true;
             camera = new Camera2D(this);
-            serverEnabled = server;
+            camera.Focus = this;
             Exiting += Game1_Exiting;
-
         }
-
+        public void StartClient()
+        { 
+        
+        }
+        public void StartServer()
+        { 
+            
+        }
         void Game1_Exiting(object sender, EventArgs e)
         {
-            if (serverEnabled)
-            {
+            if (gameServer != null)
                 gameServer.Stop();
-            }
-            gameClient.Stop();
+            if (gameClient != null)
+                gameClient.Stop();
         }
 
         /// <summary>
@@ -64,7 +81,7 @@ namespace NetManager
             // TODO: Add your initialization logic here
             Components.Add(camera);
             base.Initialize();
-        } 
+        }
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -75,19 +92,12 @@ namespace NetManager
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             TextureManager.Load(Content);
-
-            if (serverEnabled)
-            {
-                gameServer = new GameServer(29);
-                gameServer.Start();
-            }
-            gameFont = Content.Load<SpriteFont>("gameFont");
-            gameClient = new GameClient(25452, "127.0.0.1", (serverEnabled)?"ServerPlayer":"ClientPlayer");
-            camera.Focus = gameClient;
-            camera.Scale = 1.45f;
+            mainMenu = new GUI.MainMenu(this);
+            currentMenu = mainMenu;
+            camera.Focus = mainMenu;
             // TODO: use this.Content to load your game content here
         }
-        
+
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
         /// all content.
@@ -95,9 +105,8 @@ namespace NetManager
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
-
         }
-        float speed = 8f;
+        
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -105,21 +114,14 @@ namespace NetManager
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            //camera.Update(gameTime);
             // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 this.Exit();
+
+            if (currentMenu != null)
+                currentMenu.Update(gameTime);
             // TODO: Add your update logic here
-            if (Keyboard.GetState().IsKeyDown(Keys.F))
-            {
-                camera.Scale -= 0.05f;
-            }
-            else if (Keyboard.GetState().IsKeyDown(Keys.R))
-            {
-                camera.Scale += 0.05f;
-            }
-            if(gameClient.Initialized)
-                gameClient.Update(gameTime);
+
             base.Update(gameTime);
         }
 
@@ -129,16 +131,22 @@ namespace NetManager
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.FromNonPremultiplied(110,161,255,255));
-            spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
-            if(gameClient.Initialized)
-            gameClient.Draw(spriteBatch);
-
-            //spriteBatch.DrawString(GameFont, "Zoom: " + camera.Scale, new Vector2(0, 400), Color.Blue);
+            GraphicsDevice.Clear(Color.FromNonPremultiplied(110, 161, 255, 255));
+            if (gameState != GameState.MainMenu)
+                spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, DepthStencilState.Default, null, null, camera.Transform);
+            else
+                spriteBatch.Begin();
+            
+            if (currentMenu != null)
+                currentMenu.Draw(spriteBatch);
+            
             spriteBatch.End();
-            // TODO: Add your drawing code here
-
             base.Draw(gameTime);
+        }
+
+        public Vector2 Position
+        {
+            get { return Vector2.Zero; }
         }
     }
 }

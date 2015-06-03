@@ -4,12 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-namespace Bearded_Dangerzone_Client.GUI
+using TextureManager = Bearded_Dangerzone.GamePart.TextureManager;
+namespace Bearded_Dangerzone.GUI
 {
-    class Menu
+    public class Menu
     {
-        protected List<Button> buttons = new List<Button>();
+        protected List<IGUIComponent> buttons = new List<IGUIComponent>();
         protected Rectangle menuRectangle;
         protected Texture2D sheet;
         protected Rectangle backgroundSourceRectangle;
@@ -22,18 +22,21 @@ namespace Bearded_Dangerzone_Client.GUI
             
         }
         public virtual void Load(Rectangle baseRectangle,Rectangle textureSource,string sheetName,int margin,int distance,Color _textColor)
-        { 
-            menuRectangle = Helper.TransformRectangle(baseRectangle);
-            sheet = Textures.GetTexture(sheetName);
+        {
+            menuRectangle = baseRectangle;
+            sheet = TextureManager.SpriteSheet;
             backgroundSourceRectangle = textureSource;
             buttonMargin = margin;
             buttonDistance = distance;
             textColor = _textColor;
         }
 
-        public virtual void AddButton(string text,int y,int height)
-        { 
-            buttons.Add(new Button(text,textColor,y,buttonMargin,height,menuRectangle.Width,menuRectangle));
+        public virtual void AddButton(string text,int y,int height,MouseButtonClick btnEvent)
+        {
+            Button btn = new Button(text, textColor, y, buttonMargin, height, menuRectangle.Width, menuRectangle);
+            btn.ButtonClicked += btnEvent;
+            buttons.Add(btn);
+
         }
         public virtual void Update(GameTime gameTime)
         {

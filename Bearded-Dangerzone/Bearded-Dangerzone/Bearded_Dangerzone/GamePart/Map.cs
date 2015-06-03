@@ -11,9 +11,8 @@ using System.Xml;
 using System.Threading;
 using Lidgren.Network;
 using System.Xml.Linq;
-using NetManager.Environment;
 
-namespace NetManager
+namespace Bearded_Dangerzone.GamePart
 {
 
     class Map
@@ -405,25 +404,46 @@ namespace NetManager
     }
     static class TextureManager
     {
-        private static Dictionary<byte, Rectangle> textureData = new Dictionary<byte, Rectangle>();
+        private static Dictionary<string, Rectangle> textureData = new Dictionary<string, Rectangle>();
         public static Texture2D SpriteSheet;
+        public static SpriteFont GameFont { get; private set; }
+        public static Texture2D MenuBackground;
         public static void Load(ContentManager content)
         {
             SpriteSheet = content.Load<Texture2D>("Sheet");
-            textureData.Add(1, new Rectangle(0, 0, 40, 40));
-            textureData.Add(2, new Rectangle(40, 0, 40, 40));
-            textureData.Add(3, new Rectangle(80, 0, 40, 40));
-            textureData.Add(4, new Rectangle(120, 0, 40, 40));
-            textureData.Add(5, new Rectangle(0, 80, 40, 80));
-            textureData.Add(6, new Rectangle(0, 40, 40, 40));
-            
+            MenuBackground = content.Load<Texture2D>("MenuBackground");
+            textureData.Add("dirt", new Rectangle(0, 0, 40, 40));
+            textureData.Add("grass", new Rectangle(40, 0, 40, 40));
+            textureData.Add("stone", new Rectangle(80, 0, 40, 40));
+            textureData.Add("spawn", new Rectangle(120, 0, 40, 40));
+            textureData.Add("player", new Rectangle(0, 80, 40, 80));
+            textureData.Add("yellowRectangle", new Rectangle(0, 40, 40, 40));
+            textureData.Add("menuTexture1", new Rectangle(40, 40, 40, 40));
+            textureData.Add("menuTexture2", new Rectangle(80, 40, 40, 40));
+            textureData.Add("menuTexture3", new Rectangle(120, 40, 40, 40));
+            GameFont = content.Load<SpriteFont>("gameFont");
             Sky = content.Load<Texture2D>("AllClouds");
         }
-        public static Rectangle GetSourceRectangle(byte id)
+        public static Rectangle GetSourceRectangle(string id)
         {
             return textureData[id];
         }
-
+        public static Rectangle GetSourceRectangle(byte id)
+        {
+            switch (id)
+            {
+                case 1:
+                    return GetSourceRectangle("dirt");
+                case 2:
+                    return GetSourceRectangle("grass");
+                case 3:
+                    return GetSourceRectangle("stone");
+                case 4:
+                    return GetSourceRectangle("spawn");
+                default:
+                    return new Rectangle();
+            }
+        }
         public static Texture2D Sky { get; set; }
     }
 }

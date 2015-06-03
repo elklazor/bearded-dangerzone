@@ -9,7 +9,7 @@ namespace Bearded_Dangerzone_Client.GUI
 {
     class MainMenu:Menu
     {
-
+        
         public MainMenu():
             base()
         {
@@ -33,6 +33,7 @@ namespace Bearded_Dangerzone_Client.GUI
 
         public override void Draw(SpriteBatch spriteBatch)
         {
+            spriteBatch.Draw(Textures.GetTexture("MenuBackground"), Vector2.Zero, Color.White);
             spriteBatch.Draw(sheet, menuRectangle, backgroundSourceRectangle, Color.White, 0f, Vector2.Zero, SpriteEffects.None, 1f);
             foreach (var button in buttons)
             {

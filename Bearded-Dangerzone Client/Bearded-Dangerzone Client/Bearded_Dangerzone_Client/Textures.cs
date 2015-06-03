@@ -13,7 +13,7 @@ namespace Bearded_Dangerzone_Client
         private static Dictionary<string, Texture2D> textures = new Dictionary<string, Texture2D>();
         public static void Load(ContentManager content)
         {
-            string[] sheets = new string[1] { "Sheet1" };
+            string[] sheets = new string[2] { "Sheet1","MenuBackground" };
             foreach (var s in sheets)
             {
                 textures.Add(s, content.Load<Texture2D>(s));

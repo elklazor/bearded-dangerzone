@@ -1,0 +1,32 @@
+﻿* e515052 : Added log file, updated NuclexReferences
+* dee0b65 : Separated classes into GamePart and GUI. Added text over players other than yourself GUI added, and it is now possible to join and host trough the menu.
+* 8dedfbd : Added .sln file
+* feb1589 : Bearded-dangerzone is now the working directory
+* c40f1fc : First #player release. Added client and server versions
+* 571b8e5 : Added drawing for other players, need client only version
+* 53d5321 : Fixed a stack overflow bug (+- switch in LoadChunk()), Fixed generation of walls (GetY(bool) switch)
+* 9ed903e : Added clouds, new character,collision rectangles, modified chunk generation, modified rectangle sizes
+* 50f6b5e : New collision (untested)
+* 084261e : Updated graphics
+* 923c1e1 : New SpriteSheet and TextureManager
+* 859d20e : GameFont moved into TextureManager
+* 287f330 : Updated the texture loading mechanism
+* a7ef50a : Collision logic changed
+* 1c5a9c2 : Chunk loading now working
+* f3684cd : First working connection
+* b0002b1 : Moved logic into partial class
+* d7b6c7f : Tidying things up in the main classes
+* cafde4d : Added client only logic + Chunk requests, and responses
+* be1bc8d : Moved some logic into the GameServer
+* 9046786 : Redid textures
+* 7063e05 : Updated loading
+* e8985bf : Small bug update
+* 518b2d1 : Bug fixes regarding loading
+* cf06b35 : First client version
+* 34820ce : Map loading and server polishing
+* 104c1d2 : Moved Chunk and Map into their own files
+* 62bce4f : Dynamic generation, and dynamic unloading. Saving of regions
+* aaa2895 : Removed server, added NetManager
+* 2946ac2 : Added projects and files
+* 9548aa7 : Create README.md
+* 3cdeb81 : Initial commit

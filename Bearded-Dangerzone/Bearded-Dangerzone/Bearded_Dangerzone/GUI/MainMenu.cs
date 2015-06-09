@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using TextureManager = Bearded_Dangerzone.GamePart.TextureManager;
@@ -17,22 +18,24 @@ namespace Bearded_Dangerzone.GUI
             baseGame = game;
 
             AddButton("Play",20, 40,new MouseButtonClick(ButtonPlayClicked));
-            AddButton("Host", 80, 40,new MouseButtonClick(ButtonHostClicked));
-            AddButton("Toggle Fullscreen", 140, 40,new MouseButtonClick(ButtonToggleClicked));
-            AddButton("Reset Map", 200, 40,new MouseButtonClick(ResetMapClicked));
+            AddButton("Toggle Fullscreen", 80, 40,new MouseButtonClick(ButtonToggleClicked));
+            AddButton("Reset Map", 140, 40,new MouseButtonClick(ResetMapClicked));
             AddButton("Exit", 500, 40,new MouseButtonClick(ExitButtonClicked));
         }
 
         void ButtonPlayClicked()
         {
-            baseGame.BaseGameState = Game1.GameState.Join; 
+            baseGame.CurrentMenu = new JoinMenu(baseGame);
         }
-        void ButtonHostClicked()
-        { }
         void ButtonToggleClicked()
-        { }
+        {
+            baseGame.ToggleFullScreen();
+        }
         void ResetMapClicked()
-        { }
+        {
+            Directory.Delete("./Map/Regions",true);
+            Directory.CreateDirectory("./Map/Regions");
+        }
         private void ExitButtonClicked()
         {
             baseGame.Exit();

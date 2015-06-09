@@ -127,6 +127,7 @@ namespace Bearded_Dangerzone.GamePart
                         chatQueue.Enqueue(new Message(netIn.ReadString(), 0));
                         localPlayer = new Player();
                         localPlayer.Type = 1;
+                        localPlayer.IsLocal = true;
                         localPlayer.SetAllFields(netIn.ReadVector2(), name, id, 100);
                     }
                     else

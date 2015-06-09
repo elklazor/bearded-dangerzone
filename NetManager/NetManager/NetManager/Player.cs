@@ -28,6 +28,7 @@ namespace NetManager
         public bool IsLocal { get; set; }
         private Rectangle textureSourceRectangle;
         private Vector2 previousPosition;
+        public bool MapLoaded { get; set; }
         public Player()
         {
             textureSourceRectangle = TextureManager.GetSourceRectangle(5);
@@ -86,7 +87,7 @@ namespace NetManager
         {
             doneJumpCollision = false;
             Input(gameTime);
-            if (gameTime.TotalGameTime.Seconds > updateStartTimer)
+            if (MapLoaded)
             {
                 velocity.Y += (float)gameTime.ElapsedGameTime.TotalMilliseconds / 17;
                 playerRectangle = new Rectangle((int)Position.X, (int)Position.Y, 40, 80);

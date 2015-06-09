@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Bearded_Dangerzone.GamePart;
 using Bearded_Dangerzone.GUI;
+using Nuclex.Input;
+using System.Threading;
 namespace Bearded_Dangerzone
 {
     /// <summary>
@@ -24,6 +26,7 @@ namespace Bearded_Dangerzone
         Camera2D camera;
         GameServer gameServer;
         GameClient gameClient;
+        InputManager inputManager;
 
         public enum GameState
         {
@@ -53,6 +56,25 @@ namespace Bearded_Dangerzone
             camera = new Camera2D(this);
             camera.Focus = this;
             Exiting += Game1_Exiting;
+            inputManager = new InputManager(Window.Handle);
+            inputManager.GetKeyboard().CharacterEntered += Game1_CharacterEntered;
+        }
+
+        void Game1_CharacterEntered(char character)
+        {
+            if (currentMenu != null)
+            {
+                if (currentMenu.CurrentControl != null)
+                {
+                    if (character == 8)
+                    {
+                        if(currentMenu.CurrentControl.Text.Length > 0)
+                            currentMenu.CurrentControl.Text = currentMenu.CurrentControl.Text.Substring(0, currentMenu.CurrentControl.Text.Length - 1);
+                    }
+                    else if (currentMenu.CurrentControl.Text.Length < currentMenu.CurrentControl.MaxLength)
+                        currentMenu.CurrentControl.Text += character;
+                }
+            }
         }
         public void StartClient()
         { 
@@ -80,6 +102,7 @@ namespace Bearded_Dangerzone
         {
             // TODO: Add your initialization logic here
             Components.Add(camera);
+            Components.Add(inputManager);
             base.Initialize();
         }
 
@@ -120,6 +143,11 @@ namespace Bearded_Dangerzone
 
             if (currentMenu != null)
                 currentMenu.Update(gameTime);
+            if (gameClient != null)
+            if(gameClient.Initialized)
+                gameClient.Update(gameTime);
+           
+           
             // TODO: Add your update logic here
 
             base.Update(gameTime);
@@ -139,7 +167,11 @@ namespace Bearded_Dangerzone
             
             if (currentMenu != null)
                 currentMenu.Draw(spriteBatch);
-            
+
+            if (gameClient != null)
+                if (gameClient.Initialized)
+                    gameClient.Draw(spriteBatch);
+
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -147,6 +179,26 @@ namespace Bearded_Dangerzone
         public Vector2 Position
         {
             get { return Vector2.Zero; }
+        }
+
+        internal void Connect(string ip, int port, string name)
+        {
+            gameClient = new GameClient(port, ip, name);
+            camera.Focus = gameClient;
+        }
+        internal void StartServerAndConnect(string name, int port)
+        {
+            gameServer = new GameServer(port);
+            gameServer.Start();
+            Thread.Sleep(100);
+            gameClient = new GameClient(port, "127.0.0.1", name);
+            camera.Focus = gameClient;
+        }
+
+        internal void ToggleFullScreen()
+        {
+            graphics.IsFullScreen = !graphics.IsFullScreen;
+            graphics.ApplyChanges();
         }
     }
 }

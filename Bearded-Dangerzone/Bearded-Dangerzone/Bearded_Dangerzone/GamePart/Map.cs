@@ -55,6 +55,9 @@ namespace Bearded_Dangerzone.GamePart
                     allChunks[c.ID] = c;
                 else
                     allChunks.TryAdd(c.ID,c);
+
+                if (c.ID == 0)
+                    localPlayer.MapLoaded = true;
             //}
         }
         public Dictionary<short,bool> GetRequestedChunks()
@@ -421,6 +424,7 @@ namespace Bearded_Dangerzone.GamePart
             textureData.Add("menuTexture1", new Rectangle(40, 40, 40, 40));
             textureData.Add("menuTexture2", new Rectangle(80, 40, 40, 40));
             textureData.Add("menuTexture3", new Rectangle(120, 40, 40, 40));
+            textureData.Add("menuTexture4", new Rectangle(160, 40, 40, 40));
             GameFont = content.Load<SpriteFont>("gameFont");
             Sky = content.Load<Texture2D>("AllClouds");
         }

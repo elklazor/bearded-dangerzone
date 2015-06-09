@@ -56,6 +56,9 @@ namespace NetManager
                     allChunks[c.ID] = c;
                 else
                     allChunks.TryAdd(c.ID,c);
+
+                if (c.ID == 0)
+                    localPlayer.MapLoaded = true;
             //}
         }
         public Dictionary<short,bool> GetRequestedChunks()
@@ -124,6 +127,7 @@ namespace NetManager
         {
             localPlayer = c;
             localPlayer.MapRef = this;
+           
         }
         public Player LocalPlayer
         {

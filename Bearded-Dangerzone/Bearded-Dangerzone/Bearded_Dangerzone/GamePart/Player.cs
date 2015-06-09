@@ -53,6 +53,7 @@ namespace Bearded_Dangerzone.GamePart
             {
                 playerRectangle = new Rectangle((int)Position.X, (int)Position.Y, 40, 80);
                 textureSourceRectangle = textureSourceRectangle = new Rectangle(40 * AnimationState, 80, 40, 80);
+                spriteBatch.DrawString(TextureManager.GameFont, Name, new Vector2(Position.X + (20) - (TextureManager.GameFont.MeasureString(Name).X / 2),Position.Y - 40), Color.OrangeRed);
             }
 
             spriteBatch.Draw(TextureManager.SpriteSheet, playerRectangle, textureSourceRectangle, Color.White,0f,Vector2.Zero,(Flip)? SpriteEffects.FlipHorizontally : SpriteEffects.None,0f);
@@ -87,7 +88,7 @@ namespace Bearded_Dangerzone.GamePart
         {
             doneJumpCollision = false;
             Input(gameTime);
-            if (gameTime.TotalGameTime.Seconds > updateStartTimer)
+            if (MapLoaded)
             {
                 velocity.Y += (float)gameTime.ElapsedGameTime.TotalMilliseconds / 17;
                 playerRectangle = new Rectangle((int)Position.X, (int)Position.Y, 40, 80);
@@ -244,5 +245,7 @@ namespace Bearded_Dangerzone.GamePart
         public Map MapRef { get; set; }
 
         public bool NeedUpdate { get; set; }
+
+        public bool MapLoaded { get; set; }
     }
 }

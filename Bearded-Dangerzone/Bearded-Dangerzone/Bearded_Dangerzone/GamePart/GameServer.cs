@@ -46,6 +46,7 @@ namespace Bearded_Dangerzone.GamePart
         public GameServer(int port)
         {
             LoadConfig();
+            serverConfig.Port = port;
             netServer = new NetServer(serverConfig);
             worldMap = new Map(mapPath,2000);
 

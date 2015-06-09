@@ -57,8 +57,7 @@ namespace NetManager
                 else
                     allChunks.TryAdd(c.ID,c);
 
-                if (c.ID == 0)
-                    localPlayer.MapLoaded = true;
+               
             //}
         }
         public Dictionary<short,bool> GetRequestedChunks()
